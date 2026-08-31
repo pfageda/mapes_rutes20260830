@@ -74,14 +74,14 @@ class MapesPoints {
       // CAMPS OBLIGATORIS PELS VALIDACIONS DEL SERVIDOR
       dme: parseInt(point.DME) || 0, // ⭐ CONVERTIR A NUMBER
       poblacio: (point.Poblacio || "No especificada").trim(),
-      provincia: point.Provincia || "Barcelona",
-      fitxa_monument: point.Fitxa_Monument || "",
-      vegades_activat: parseInt(point.Vegades_activat) || 0, // ⭐ CONVERTIR A NUMBER
-      indicatiu_activacio: point.Indicatiu_activacio || "",
+      provincia: point.provincia || "Barcelona",
+      fitxa_monument: point.fitxa_monument || "",
+      vegades_activat: parseInt(point.vegades_activat) || 0, // ⭐ CONVERTIR A NUMBER
+      indicatiu_activacio: point.indicatiu_activacio || "",
     };
 
-    if (point.Darrera_Activacio) {
-      data.darrera_activacio = point.Darrera_Activacio;
+    if (point.darrera_activacio) {
+      data.darrera_activacio = point.darrera_activacio;
     }
 
     console.log("Dades enviades per drag:", data);
@@ -164,19 +164,19 @@ class MapesPoints {
                     <label>Província *</label>
                     <select name="provincia" required>
                         <option value="Barcelona" ${
-                          point.Provincia === "Barcelona" ? "selected" : ""
+                          point.provincia === "Barcelona" ? "selected" : ""
                         }>Barcelona</option>
                         <option value="Girona" ${
-                          point.Provincia === "Girona" ? "selected" : ""
+                          point.provincia === "Girona" ? "selected" : ""
                         }>Girona</option>
                         <option value="Lleida" ${
-                          point.Provincia === "Lleida" ? "selected" : ""
+                          point.provincia === "Lleida" ? "selected" : ""
                         }>Lleida</option>
                         <option value="Tarragona" ${
-                          point.Provincia === "Tarragona" ? "selected" : ""
+                          point.provincia === "Tarragona" ? "selected" : ""
                         }>Tarragona</option>
                         <option value="New York" ${
-                          point.Provincia === "New York" ? "selected" : ""
+                          point.provincia === "New York" ? "selected" : ""
                         }>New York</option>
                     </select>
                 </div>
@@ -184,7 +184,7 @@ class MapesPoints {
             <div class="mapes-form-group">
                 <label>Indicatiu Activació</label>
                 <input type="text" name="indicatiu_activacio" value="${
-                  point.Indicatiu_activacio || ""
+                  point.indicatiu_activacio || ""
                 }">
             </div>
         </div>
@@ -195,13 +195,13 @@ class MapesPoints {
                     <div>
                         <label>Latitud</label>
                         <input type="number" step="any" name="lat" value="${parseFloat(
-                          point.lat
+                          point.lat,
                         ).toFixed(6)}">
                     </div>
                     <div>
                         <label>Longitud</label>
                         <input type="number" step="any" name="lng" value="${parseFloat(
-                          point.lng
+                          point.lng,
                         ).toFixed(6)}">
                     </div>
                 </div>
@@ -209,21 +209,21 @@ class MapesPoints {
             <div class="mapes-form-group">
                 <label>Fitxa Monument</label>
                 <input type="url" name="fitxa_monument" value="${
-                  point.Fitxa_Monument || ""
+                  point.fitxa_monument || ""
                 }">
             </div>
             <div class="mapes-coordinates-grid">
                 <div>
                     <label>Vegades Activat</label>
                     <input type="number" name="vegades_activat" value="${
-                      point.Vegades_activat || 0
+                      point.vegades_activat || 0
                     }" min="0">
                 </div>
                 <div>
                     <label>Darrera Activació</label>
                     <input type="datetime-local" name="darrera_activacio" value="${
-                      point.Darrera_Activacio
-                        ? point.Darrera_Activacio.replace(" ", "T")
+                      point.darrera_activacio
+                        ? point.darrera_activacio.replace(" ", "T")
                         : ""
                     }">
                 </div>
@@ -258,7 +258,7 @@ class MapesPoints {
     // Obtenir dades del formulari
     const title = document.getElementById(`edit-point-title-${appId}`).value;
     const description = document.getElementById(
-      `edit-point-description-${appId}`
+      `edit-point-description-${appId}`,
     ).value;
     const lat = document.getElementById(`edit-point-lat-${appId}`).value;
     const lng = document.getElementById(`edit-point-lng-${appId}`).value;
@@ -339,7 +339,7 @@ class MapesPoints {
 
     // Detectar mode (coordenades vs ubicació)
     const coordButton = document.querySelector(
-      `#modal-add-point-${appId} .mapes-input-toggle button:nth-child(2)`
+      `#modal-add-point-${appId} .mapes-input-toggle button:nth-child(2)`,
     );
     const isCoordinatesMode =
       coordButton && coordButton.classList.contains("active");
@@ -429,7 +429,7 @@ class MapesPoints {
       data.lng.trim() === ""
     ) {
       window.mapesUI.showAlert(
-        "Les coordenades són obligatòries en mode coordenades"
+        "Les coordenades són obligatòries en mode coordenades",
       );
       return;
     }
@@ -468,7 +468,7 @@ class MapesPoints {
     console.log("🔍 TIPUS:", typeof data.provincia);
     console.log(
       "🔍 VALOR LOWERCASE:",
-      data.provincia ? data.provincia.toLowerCase() : "NULL"
+      data.provincia ? data.provincia.toLowerCase() : "NULL",
     );
 
     // ⭐ DETERMINAR EL CONTEXT ABANS de geocodificar
@@ -525,12 +525,12 @@ class MapesPoints {
             data.lat = results[0].geometry.location.lat();
             data.lng = results[0].geometry.location.lng();
             console.log(
-              `✅ Geocodificat: ${locationName} -> ${data.lat}, ${data.lng}`
+              `✅ Geocodificat: ${locationName} -> ${data.lat}, ${data.lng}`,
             );
           } else {
             // Si falla, coordenades per defecte segons província
             console.warn(
-              "⚠️ Geocodificació fallida, usant coordenades per defecte"
+              "⚠️ Geocodificació fallida, usant coordenades per defecte",
             );
             console.warn("⚠️ Status:", status);
 
@@ -546,18 +546,18 @@ class MapesPoints {
               data.lng = 2.1734;
             }
             console.log(
-              `⚠️ Usant coordenades per defecte: ${data.lat}, ${data.lng}`
+              `⚠️ Usant coordenades per defecte: ${data.lat}, ${data.lng}`,
             );
           }
           console.log("📤 DADES QUE S'ENVIEN:", data);
           // Enviar dades amb coordenades
           this.sendPointData(data, appId);
-        }
+        },
       );
     } else {
       // No hi ha Google Maps disponible, usar coordenades per defecte
       console.warn(
-        "⚠️ Google Maps no disponible, usant coordenades per defecte"
+        "⚠️ Google Maps no disponible, usant coordenades per defecte",
       );
       data.lat = 41.3851;
       data.lng = 2.1734;
@@ -587,7 +587,7 @@ class MapesPoints {
       .sendAjaxRequest("mapes_add_point", pointData)
       .then(() => {
         window.mapesUI.showAlert(
-          `Monument "${pointData.title}" afegit correctament!`
+          `Monument "${pointData.title}" afegit correctament!`,
         );
         closeModal(`modal-add-point-${appId}`);
         location.reload();

@@ -158,7 +158,7 @@ class WP_Mapes_Rutes_Core
                 WP_MAPES_VERSION
             );
 
-            // Configuració per gestio-activacions
+            // Configuració per gestio-ese
             wp_localize_script('mapes-activations', 'mapesConfig', array(
                 'ajaxUrl' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('mapes_nonce'),
@@ -254,11 +254,11 @@ class WP_Mapes_Rutes_Core
         lng decimal(10,6) NOT NULL,
         DME int(11) DEFAULT NULL,
         Poblacio varchar(280) NOT NULL,
-        Provincia varchar(140) NOT NULL,
-        Fitxa_Monument varchar(500) NOT NULL,
-        Vegades_activat int(11) NOT NULL DEFAULT 0,
-        Darrera_Activacio datetime NULL,
-        Indicatiu_activacio varchar(300) NOT NULL,
+        provincia varchar(140) NOT NULL,
+        fitxa_monument varchar(500) NOT NULL,
+        vegades_activat int(11) NOT NULL DEFAULT 0,
+        darrera_activacio datetime NULL,
+        indicatiu_activacio varchar(300) NOT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),

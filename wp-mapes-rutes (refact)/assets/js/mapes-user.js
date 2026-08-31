@@ -57,7 +57,7 @@ function filterPointsByZone(points, zoneId) {
       zone.center.lat,
       zone.center.lng,
       parseFloat(point.lat),
-      parseFloat(point.lng)
+      parseFloat(point.lng),
     );
     return distance <= zone.radi_km;
   });
@@ -96,7 +96,7 @@ class MapesUser {
     this.points = filterPointsByZone(this.originalPoints, this.currentZone);
     this.routes = this.filterRoutesByZone(
       this.originalRoutes,
-      this.currentZone
+      this.currentZone,
     );
 
     // Assegurar compatibilitat amb codi antic
@@ -171,11 +171,11 @@ class MapesUser {
     console.log("Points disponibles:", this.points);
     console.log(
       "Punts totals:",
-      this.points ? this.points.length : "UNDEFINED"
+      this.points ? this.points.length : "UNDEFINED",
     );
     console.log(
       "Rutes totals:",
-      this.routes ? this.routes.length : "UNDEFINED"
+      this.routes ? this.routes.length : "UNDEFINED",
     );
 
     this.clearMarkers();
@@ -261,7 +261,7 @@ class MapesUser {
           zone.center.lat,
           zone.center.lng,
           parseFloat(point.lat),
-          parseFloat(point.lng)
+          parseFloat(point.lng),
         );
 
         return distance <= zone.radi_km;
@@ -326,7 +326,7 @@ class MapesUser {
   displayRouteDetails(route) {
     // PART 1: ACTUALITZAR PANELL D'ACCIONS (SIDEBAR) - MANTENIR CODI EXISTENT
     const routeNameSpan = document.getElementById(
-      `selected-route-name-${this.appId}`
+      `selected-route-name-${this.appId}`,
     );
     if (routeNameSpan) {
       routeNameSpan.textContent = `${route.code} - ${route.name}`;
@@ -334,27 +334,27 @@ class MapesUser {
 
     // PART 2: NOUS DETALLS SOTA DEL MAPA (SI EXISTEIXEN ELS ELEMENTS NOUS)
     const detailsPanel = document.getElementById(
-      `route-details-panel-${this.appId}`
+      `route-details-panel-${this.appId}`,
     );
     if (detailsPanel) {
       // NOVA ESTRUCTURA - Usar els nous elements
       const detailsColor = document.getElementById(
-        `route-details-color-${this.appId}`
+        `route-details-color-${this.appId}`,
       );
       const detailsName = document.getElementById(
-        `route-details-name-${this.appId}`
+        `route-details-name-${this.appId}`,
       );
       const detailsPointsCount = document.getElementById(
-        `route-details-points-count-${this.appId}`
+        `route-details-points-count-${this.appId}`,
       );
       const detailsTotalWeight = document.getElementById(
-        `route-details-total-weight-${this.appId}`
+        `route-details-total-weight-${this.appId}`,
       );
       const detailsDesc = document.getElementById(
-        `route-details-desc-${this.appId}`
+        `route-details-desc-${this.appId}`,
       );
       const pointsContainer = document.getElementById(
-        `route-points-container-${this.appId}`
+        `route-points-container-${this.appId}`,
       );
 
       // Mostrar el panell
@@ -397,11 +397,11 @@ class MapesUser {
         <div class="route-point-name">${index + 1}. ${point.title}</div>
         <div class="route-point-coords">
           ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lng).toFixed(
-              4
-            )}
+            4,
+          )}
         </div>
        <div class="route-point-weight">Pes: ${parseFloat(
-         rp.weight || 1
+         rp.weight || 1,
        ).toFixed(2)}</div>
 
       </div>
@@ -412,13 +412,13 @@ class MapesUser {
     } else {
       // PART 3: FALLBACK A L'ESTRUCTURA ANTIGA (SI NO EXISTEIXEN ELS NOUS ELEMENTS)
       const sidebarPanel = document.getElementById(
-        `route-info-panel-${this.appId}`
+        `route-info-panel-${this.appId}`,
       );
       const sidebarTitle = document.getElementById(
-        `route-info-title-${this.appId}`
+        `route-info-title-${this.appId}`,
       );
       const sidebarContent = document.getElementById(
-        `route-info-content-${this.appId}`
+        `route-info-content-${this.appId}`,
       );
 
       if (sidebarTitle) {
@@ -473,7 +473,7 @@ class MapesUser {
 
     // ⭐ MOSTRAR PANELL D'ACCIONS (COMÚ A AMBDUES ESTRUCTURES)
     const actionsPanel = document.getElementById(
-      `route-actions-panel-${this.appId}`
+      `route-actions-panel-${this.appId}`,
     );
     if (actionsPanel) {
       actionsPanel.style.display = "block";
@@ -485,7 +485,7 @@ class MapesUser {
     localStorage.setItem("selectedRouteName", route.name);
     // Al final de displayRouteDetails(), afegeix:
     const crearBtn = document.getElementById(
-      `crear-activitat-btn-${this.appId}`
+      `crear-activitat-btn-${this.appId}`,
     );
     const selectedRouteInfo = document.getElementById("selected-route-info");
 
@@ -542,13 +542,13 @@ class MapesUser {
         ) {
           // MOSTRAR ALERTA SI NO HI HA POBLACIÓ VÀLIDA
           alert(
-            `${point.title}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`
+            `${point.title}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`,
           );
           return;
         }
         const searchQuery = `${point.title} ${poblacio || ""}`.trim();
         const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-          searchQuery
+          searchQuery,
         )}?hl=ca&gl=ES`;
 
         // Obrir en nova pestanya
@@ -661,7 +661,7 @@ class MapesUser {
 
     // 2. Comptador "Monuments Disponibles"
     const pointsCount = document.getElementById(
-      `points-count-user-${this.appId}`
+      `points-count-user-${this.appId}`,
     );
     if (pointsCount) {
       pointsCount.textContent = this.points.length;
@@ -670,7 +670,7 @@ class MapesUser {
 
     // 3. Comptador "Rutes Disponibles"
     const routesCount = document.getElementById(
-      `routes-count-user-${this.appId}`
+      `routes-count-user-${this.appId}`,
     );
     if (routesCount) {
       routesCount.textContent = this.routes.length;
@@ -684,10 +684,10 @@ class MapesUser {
   togglePoints() {
     this.pointsVisible = !this.pointsVisible;
     const searchContainer = document.getElementById(
-      `points-search-container-${this.appId}`
+      `points-search-container-${this.appId}`,
     );
     const listContainer = document.getElementById(
-      `points-list-container-${this.appId}`
+      `points-list-container-${this.appId}`,
     );
 
     if (this.pointsVisible) {
@@ -713,7 +713,7 @@ class MapesUser {
         (point) =>
           point.title.toLowerCase().includes(term) ||
           (point.Poblacio && point.Poblacio.toLowerCase().includes(term)) ||
-          (point.description && point.description.toLowerCase().includes(term))
+          (point.description && point.description.toLowerCase().includes(term)),
       );
     }
 
@@ -776,10 +776,10 @@ class MapesUser {
     // Tancar llista de monuments
     this.pointsVisible = false;
     document.getElementById(
-      `points-search-container-${this.appId}`
+      `points-search-container-${this.appId}`,
     ).style.display = "none";
     document.getElementById(
-      `points-list-container-${this.appId}`
+      `points-list-container-${this.appId}`,
     ).style.display = "none";
   }
 
@@ -826,18 +826,18 @@ class MapesUser {
   showPointDetails(point) {
     // Amagar detalls de rutes si estan oberts
     const routePanel = document.getElementById(
-      `route-details-panel-${this.appId}`
+      `route-details-panel-${this.appId}`,
     );
     if (routePanel) routePanel.style.display = "none";
 
     const routeInfoPanel = document.getElementById(
-      `route-info-panel-${this.appId}`
+      `route-info-panel-${this.appId}`,
     );
     if (routeInfoPanel) routeInfoPanel.style.display = "none";
 
     // ✅ GESTIÓ INTEL·LIGENT DEL PANELL D'ACCIONS - AQUESTA ÉS LA CLAU!!!
     const routeActionsPanel = document.getElementById(
-      `route-actions-panel-${this.appId}`
+      `route-actions-panel-${this.appId}`,
     );
     const selectedRouteInfo = document.getElementById("selected-route-info");
 
@@ -851,7 +851,7 @@ class MapesUser {
       if (hasSelectedRoute) {
         routeActionsPanel.style.display = "block"; // ✅ MANTENIR VISIBLE
         console.log(
-          "🎯 Mantenint panell d'accions visible - ruta seleccionada"
+          "🎯 Mantenint panell d'accions visible - ruta seleccionada",
         );
       } else {
         routeActionsPanel.style.display = "none"; // Amagar si no hi ha ruta
@@ -861,7 +861,7 @@ class MapesUser {
 
     // ✅ ACTUALITZAR TÍTOL AMB INDICADOR DE COLOR
     const titleElement = document.getElementById(
-      `point-details-name-${this.appId}`
+      `point-details-name-${this.appId}`,
     );
     if (titleElement) {
       const pointColor = this.getPointActivationColor(point);
@@ -873,7 +873,7 @@ class MapesUser {
 
     // ✅ ACTUALITZAR DESCRIPCIÓ PRINCIPAL
     const descElement = document.getElementById(
-      `point-details-desc-${this.appId}`
+      `point-details-desc-${this.appId}`,
     );
     if (descElement) {
       descElement.textContent =
@@ -882,14 +882,14 @@ class MapesUser {
 
     // ✅ ACTUALITZAR ESTADÍSTIQUES DEL HEADER
     const activityElement = document.getElementById(
-      `point-details-activity-${this.appId}`
+      `point-details-activity-${this.appId}`,
     );
     if (activityElement) {
       activityElement.textContent = `Activitat: ${point.activity || "--"}`;
     }
 
     const weightElement = document.getElementById(
-      `point-details-weight-${this.appId}`
+      `point-details-weight-${this.appId}`,
     );
     if (weightElement) {
       weightElement.textContent = `Pes: ${point.weight || "1"}`;
@@ -897,7 +897,7 @@ class MapesUser {
 
     // ✅ OMPLIR INFORMACIÓ DETALLADA
     const infoContainer = document.getElementById(
-      `point-details-info-${this.appId}`
+      `point-details-info-${this.appId}`,
     );
     if (infoContainer) {
       infoContainer.innerHTML = this.generateDetailedPointHTML(point);
@@ -905,7 +905,7 @@ class MapesUser {
 
     // ✅ MOSTRAR EL PANELL DE DETALLS DEL PUNT
     const pointPanel = document.getElementById(
-      `point-details-panel-${this.appId}`
+      `point-details-panel-${this.appId}`,
     );
     if (pointPanel) {
       pointPanel.style.display = "block";
@@ -970,17 +970,17 @@ class MapesUser {
     <div class="point-detail-item">
       <strong class="point-detail-label">Activacions Total:</strong>
       <span class="point-detail-value">${
-        point.Vegades_activat || 0
+        point.vegades_activat || 0
       } vegades</span>
     </div>
     
     ${
-      point.Darrera_Activacio
+      point.darrera_activacio
         ? `
     <div class="point-detail-item">
       <strong class="point-detail-label">Última Activació:</strong>
       <span class="point-detail-value">${this.formatDate(
-        point.Darrera_Activacio
+        point.darrera_activacio,
       )}</span>
     </div>
     `
@@ -995,7 +995,7 @@ class MapesUser {
   showPointDetailsOldSystem(point) {
     // Crear/mostrar panell antic
     let pointPanel = document.getElementById(
-      `point-details-panel-${this.appId}`
+      `point-details-panel-${this.appId}`,
     );
     if (!pointPanel) {
       pointPanel = this.createPointDetailsPanel();
@@ -1049,7 +1049,7 @@ class MapesUser {
       <div class="point-detail-item">
         <span class="point-detail-label">Població:</span>
         <span class="point-detail-value">${this.escapeHtml(
-          point.Poblacio
+          point.Poblacio,
         )}</span>
       </div>
       `
@@ -1062,7 +1062,7 @@ class MapesUser {
       <div class="point-detail-item">
         <span class="point-detail-label">Descripció:</span>
         <span class="point-detail-value">${this.escapeHtml(
-          point.description
+          point.description,
         )}</span>
       </div>
       `
@@ -1072,17 +1072,17 @@ class MapesUser {
       <div class="point-detail-item">
         <span class="point-detail-label">Activacions:</span>
         <span class="point-detail-value">${
-          point.Vegades_activat || 0
+          point.vegades_activat || 0
         } vegades</span>
       </div>
       
       ${
-        point.Darrera_Activacio
+        point.darrera_activacio
           ? `
       <div class="point-detail-item">
         <span class="point-detail-label">Última:</span>
         <span class="point-detail-value">${this.formatDate(
-          point.Darrera_Activacio
+          point.darrera_activacio,
         )}</span>
       </div>
       `
@@ -1216,7 +1216,7 @@ class MapesUser {
     }
 
     console.log(
-      `🗺️ Mapa ajustat: ${mapHeight}px, pantalla: ${screenWidth}x${screenHeight}, detalls: ${showDetails}`
+      `🗺️ Mapa ajustat: ${mapHeight}px, pantalla: ${screenWidth}x${screenHeight}, detalls: ${showDetails}`,
     );
   }
 
@@ -1289,7 +1289,7 @@ window.openPointInGoogleMaps = function (pointTitle, pointPoblacio) {
     pointPoblacio.trim().toLowerCase() === "no especificada"
   ) {
     alert(
-      `${pointTitle}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`
+      `${pointTitle}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`,
     );
     return;
   }
@@ -1297,7 +1297,7 @@ window.openPointInGoogleMaps = function (pointTitle, pointPoblacio) {
   // Reutilitzar la mateixa lògica dels markers
   const searchQuery = `${pointTitle} ${pointPoblacio}`.trim();
   const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-    searchQuery
+    searchQuery,
   )}?hl=ca&gl=ES`;
 
   // Obrir en nova pestanya
@@ -1459,7 +1459,7 @@ function updateRoutesListVisibility(appId) {
   if (!app) return;
 
   const routeItems = document.querySelectorAll(
-    `#${appId} .mapes-route-item-user`
+    `#${appId} .mapes-route-item-user`,
   );
 
   routeItems.forEach((item) => {

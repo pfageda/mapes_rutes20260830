@@ -106,7 +106,7 @@ class MapesCore {
     this.map.addListener("click", (event) => {
       // Ocultar panell d'edició si està obert
       const editPanel = document.getElementById(
-        `edit-panel-${this.currentAppId}`
+        `edit-panel-${this.currentAppId}`,
       );
       if (editPanel && editPanel.style.display === "block") {
         editPanel.style.display = "none";
@@ -116,7 +116,7 @@ class MapesCore {
         this.createPointFromClick(
           title.trim(),
           event.latLng.lat(),
-          event.latLng.lng()
+          event.latLng.lng(),
         );
       }
     });
@@ -181,7 +181,7 @@ class MapesCore {
 
     // AFEGIR: Ocultar panell d'edició
     const editPanel = document.getElementById(
-      `edit-panel-${this.currentAppId}`
+      `edit-panel-${this.currentAppId}`,
     );
     if (editPanel) {
       editPanel.style.display = "none";
@@ -193,7 +193,7 @@ class MapesCore {
   getPointActivationColor(point) {
     // ⭐ DEBUG TEMPORAL - AFEGIR AQUESTES LÍNIES
     console.log("🔍 DEBUG PUNT:", point.title);
-    console.log("🔍 Vegades_activat:", point.Vegades_activat);
+    console.log("🔍 Vegades_activat:", point.vegades_activat);
     console.log("🔍 activation_status:", point.activation_status);
     console.log("🔍 Darrera_Activacio:", point.Darrera_Activacio);
     console.log("------------------------");
