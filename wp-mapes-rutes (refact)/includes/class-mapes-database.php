@@ -171,53 +171,9 @@ class WP_Mapes_Database
 
         // AFEGIR AQUESTES NOVES SECCIONS AQUÍ:
 
-        // CREAR TAULA D'ACTIVACIONS MANUALMENT (per gestió d'administrador)
-        $activacions_table = $wpdb->prefix . 'mapes_activacions';
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$activacions_table'");
-
-        if ($table_exists != $activacions_table) {
-            $activacions_sql = "CREATE TABLE $activacions_table (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            route_id int(11) NOT NULL,
-            user_id int(11) NULL,
-            activation_code varchar(10) NOT NULL,
-            indicatiu varchar(300) NOT NULL,
-            email varchar(255) NOT NULL,
-            data_activitat date NOT NULL,
-            drmc varchar(100) NOT NULL,
-            modes_operacio text NOT NULL,
-            horari varchar(20) NOT NULL DEFAULT 'mati',
-            comentaris text,
-            status varchar(20) NOT NULL DEFAULT 'creada',
-            fitxer_adi varchar(255),
-            imatges text,
-            fitxer_pdf varchar(255),
-            confirmed_at datetime NULL,
-            confirmed_by int(11) NULL,
-            rejected_at datetime NULL,
-            rejected_by int(11) NULL,
-            rejection_reason text,
-            deleted_at datetime NULL,
-            deleted_by int(11) NULL,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY activation_code (activation_code),
-            KEY route_id (route_id),
-            KEY email_code (email, activation_code),
-            KEY status_date (status, data_activitat),
-            KEY user_id (user_id)
-        ) $charset_collate";
-
-            $result = $wpdb->query($activacions_sql);
-            if ($result === false) {
-                error_log('ERROR CREANT TAULA ACTIVACIONS: ' . $wpdb->last_error);
-            } else {
-                error_log('TAULA ACTIVACIONS CREADA CORRECTAMENT');
-            }
-        } else {
-            error_log('TAULA ACTIVACIONS JA EXISTEIX');
-        }
+        // No creem la taula mapes_activacions automàticament.
+// La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
+        error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'mapes_activacions; la taula està consolidada a mapes_activitats.');
 
         // CREAR TAULA DE DOCUMENTS D'ACTIVACIONS
         $documents_table = $wpdb->prefix . 'mapes_activitat_documents';

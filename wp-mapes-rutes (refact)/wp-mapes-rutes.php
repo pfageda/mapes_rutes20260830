@@ -219,7 +219,6 @@ class WP_Mapes_Rutes_Core
             $wpdb->prefix . 'mapes_route_points',
             $wpdb->prefix . 'mapes_activitats',
             $wpdb->prefix . 'mapes_activitat_points',
-            $wpdb->prefix . 'mapes_activacions',
             $wpdb->prefix . 'mapes_activitat_documents'
         ];
 
