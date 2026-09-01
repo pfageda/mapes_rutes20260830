@@ -417,16 +417,94 @@ class MapesPoints {
       });
   }
 
+  // --- AFEGIR A LA CLASSE MapesPoints: reverseGeocodeLatLng (enganxa just abans de sendPointData) ---
+  reverseGeocodeLatLng(lat, lng, placeName = "") {
+    return new Promise((resolve, reject) => {
+      if (
+        !window.google ||
+        !window.google.maps ||
+        !window.google.maps.Geocoder
+      ) {
+        return reject(new Error("Google Maps API no disponible"));
+      }
+
+      const geocoder = new google.maps.Geocoder();
+      const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+      geocoder.geocode({ location: latlng }, (results, status) => {
+        if (status !== "OK" || !results || results.length === 0) {
+          return reject(
+            new Error(
+              "No s'han obtingut resultats de geocodificació: " + status,
+            ),
+          );
+        }
+
+        // Preferim un resultat que coincideixi amb el nom donat per l'usuari (si existeix)
+        let best = results[0];
+        if (placeName) {
+          const q = placeName.toLowerCase();
+          for (const r of results) {
+            if (
+              (r.formatted_address || "").toLowerCase().includes(q) ||
+              (r.address_components || []).some((ac) =>
+                (ac.long_name || "").toLowerCase().includes(q),
+              )
+            ) {
+              best = r;
+              break;
+            }
+          }
+        }
+
+        const comps = best.address_components || [];
+        const getComp = (types) => {
+          for (const t of types) {
+            const found = comps.find(
+              (c) => c.types && c.types.indexOf(t) !== -1,
+            );
+            if (found) return found.long_name;
+          }
+          return null;
+        };
+
+        // Heurístiques per a població i província
+        const poblacio =
+          getComp([
+            "locality",
+            "postal_town",
+            "sublocality",
+            "neighborhood",
+            "administrative_area_level_3",
+          ]) || "";
+        let provincia =
+          getComp([
+            "administrative_area_level_2",
+            "administrative_area_level_1",
+          ]) || "";
+        provincia = (provincia || "").replace(/^provincia\s+de\s+/i, "").trim();
+
+        resolve({
+          poblacio,
+          provincia,
+          formatted_address: best.formatted_address || "",
+        });
+      });
+    });
+  }
+  // --- FI reverseGeocodeLatLng ---
+
   // NOVA FUNCIÓ: MODE COORDENADES
+  /* --- SUBSTITUEIX L'ANTIGA processCoordinatesMode AMB AQUESTA VERSIÓ (enganyar tota la funció existent) --- */
   processCoordinatesMode(data, appId) {
     console.log("=== MODE COORDENADES ===");
 
     // Validació de coordenades
     if (
-      !data.lat ||
-      !data.lng ||
-      data.lat.trim() === "" ||
-      data.lng.trim() === ""
+      data.lat === undefined ||
+      data.lng === undefined ||
+      data.lat === "" ||
+      data.lng === ""
     ) {
       window.mapesUI.showAlert(
         "Les coordenades són obligatòries en mode coordenades",
@@ -449,13 +527,47 @@ class MapesPoints {
       return;
     }
 
-    // Assignar coordenades validades
+    // Assignar coordenades validades (numèriques)
     data.lat = lat;
     data.lng = lng;
 
-    // Enviar dades del monument
-    this.sendPointData(data, appId);
+    // Si hi ha Google Maps disponible, fem reverse geocoding per omplir poblacio/provincia
+    const placeName = (data.location_name || "").trim();
+
+    if (typeof google !== "undefined" && google.maps && google.maps.Geocoder) {
+      // Opcional: mostrar un missatge curt a l'usuari
+      // window.mapesUI.showAlert('Obtenint població/província des de Google Maps...');
+
+      this.reverseGeocodeLatLng(lat, lng, placeName)
+        .then(({ poblacio, provincia, formatted_address }) => {
+          if (poblacio) data.poblacio = poblacio;
+          if (provincia) data.provincia = provincia;
+          // Opcional per debug: data._gm_formatted_address = formatted_address;
+          console.log("Reverse geocode OK:", {
+            lat,
+            lng,
+            poblacio,
+            provincia,
+            formatted_address,
+          });
+
+          // Enviar dades del monument amb la població/província obtingudes
+          this.sendPointData(data, appId);
+        })
+        .catch((err) => {
+          console.warn("Reverse geocode fallida:", err);
+          // fallback: enviar igualment (el servidor posarà valors per defecte)
+          this.sendPointData(data, appId);
+        });
+    } else {
+      // Si no hi ha Google disponible, fallback d'abans
+      console.warn(
+        "⚠️ Google Maps no disponible, enviant dades sense reverse geocode",
+      );
+      this.sendPointData(data, appId);
+    }
   }
+  /* --- FI processCoordinatesMode --- */
 
   // NOVA FUNCIÓ: MODE UBICACIÓ
   processLocationMode(data, appId) {
