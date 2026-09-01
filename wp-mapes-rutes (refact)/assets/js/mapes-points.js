@@ -133,107 +133,92 @@ class MapesPoints {
     // Actualitzar nom
     editTitle.textContent = `Editar: ${point.title}`;
 
-    // Crear formulari inline COMPLET (basat en el HTML que m'has mostrat)
+    // Abans d'assignar editContent.innerHTML, calcula valors normalitzats:
+    const poblacioValue =
+      (point.poblacio || point.Poblacio || "").trim() || "No especificada";
+    const provinciaValue =
+      (point.provincia || point.Provincia || "").trim() || "";
+
+    // Ara crea l'HTML utilitzant aquestes variables
     editContent.innerHTML = `
-    <form class="mapes-edit-form" onsubmit="mapesPoints.submitInlineEdit('${pointId}', event)">
-        <div class="mapes-edit-form-left">
-            <div class="mapes-form-group">
-                <label>Nom *</label>
-                <input type="text" name="title" value="${
-                  point.title || ""
-                }" required>
-            </div>
-             <div class="mapes-form-group">
-            <label>Descripció</label>
-            <textarea name="description" rows="3" placeholder="Descripció del monument">${
-              point.description || ""
-            }</textarea>
+<form class="mapes-edit-form" onsubmit="mapesPoints.submitInlineEdit('${pointId}', event)">
+  <div class="mapes-edit-form-left">
+    <div class="mapes-form-group">
+      <label>Nom *</label>
+      <input type="text" name="title" value="${(point.title || "").replace(/"/g, "&quot;")}" required>
+    </div>
+
+    <div class="mapes-form-group">
+      <label>Descripció</label>
+      <textarea name="description" rows="3" placeholder="Descripció del monument">${point.description || ""}</textarea>
+    </div>
+
+    <div class="mapes-form-group">
+      <label>DME</label>
+      <input type="number" name="dme" value="${point.DME || 0}">
+    </div>
+
+    <div class="mapes-coordinates-grid">
+      <div>
+        <label>Població *</label>
+        <input type="text" name="poblacio" value="${poblacioValue.replace(/"/g, "&quot;")}" required>
+      </div>
+      <div>
+        <label>Província *</label>
+        <select name="provincia" required>
+          <option value="Barcelona" ${provinciaValue === "Barcelona" ? "selected" : ""}>Barcelona</option>
+          <option value="Girona" ${provinciaValue === "Girona" ? "selected" : ""}>Girona</option>
+          <option value="Lleida" ${provinciaValue === "Lleida" ? "selected" : ""}>Lleida</option>
+          <option value="Tarragona" ${provinciaValue === "Tarragona" ? "selected" : ""}>Tarragona</option>
+          <option value="New York" ${provinciaValue === "New York" ? "selected" : ""}>New York</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mapes-form-group">
+      <label>Indicatiu Activació</label>
+      <input type="text" name="indicatiu_activacio" value="${point.indicatiu_activacio || ""}">
+    </div>
+  </div>
+
+  <div class="mapes-edit-form-right">
+    <div class="mapes-form-group">
+      <label>Coordenades</label>
+      <div class="mapes-coordinates-grid">
+        <div>
+          <label>Latitud</label>
+          <input type="number" step="any" name="lat" value="${parseFloat(point.lat || 0).toFixed(6)}">
         </div>
-            <div class="mapes-form-group">
-                <label>DME</label>
-                <input type="number" name="dme" value="${point.DME || 0}">
-            </div>
-            <div class="mapes-coordinates-grid">
-                <div>
-                    <label>Població *</label>
-                    <input type="text" name="poblacio" value="${
-                      point.Poblacio || "No especificada"
-                    }" required>
-                </div>
-                <div>
-                    <label>Província *</label>
-                    <select name="provincia" required>
-                        <option value="Barcelona" ${
-                          point.provincia === "Barcelona" ? "selected" : ""
-                        }>Barcelona</option>
-                        <option value="Girona" ${
-                          point.provincia === "Girona" ? "selected" : ""
-                        }>Girona</option>
-                        <option value="Lleida" ${
-                          point.provincia === "Lleida" ? "selected" : ""
-                        }>Lleida</option>
-                        <option value="Tarragona" ${
-                          point.provincia === "Tarragona" ? "selected" : ""
-                        }>Tarragona</option>
-                        <option value="New York" ${
-                          point.provincia === "New York" ? "selected" : ""
-                        }>New York</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mapes-form-group">
-                <label>Indicatiu Activació</label>
-                <input type="text" name="indicatiu_activacio" value="${
-                  point.indicatiu_activacio || ""
-                }">
-            </div>
+        <div>
+          <label>Longitud</label>
+          <input type="number" step="any" name="lng" value="${parseFloat(point.lng || 0).toFixed(6)}">
         </div>
-        <div class="mapes-edit-form-right">
-            <div class="mapes-form-group">
-                <label>Coordenades</label>
-                <div class="mapes-coordinates-grid">
-                    <div>
-                        <label>Latitud</label>
-                        <input type="number" step="any" name="lat" value="${parseFloat(
-                          point.lat,
-                        ).toFixed(6)}">
-                    </div>
-                    <div>
-                        <label>Longitud</label>
-                        <input type="number" step="any" name="lng" value="${parseFloat(
-                          point.lng,
-                        ).toFixed(6)}">
-                    </div>
-                </div>
-            </div>
-            <div class="mapes-form-group">
-                <label>Fitxa Monument</label>
-                <input type="url" name="fitxa_monument" value="${
-                  point.fitxa_monument || ""
-                }">
-            </div>
-            <div class="mapes-coordinates-grid">
-                <div>
-                    <label>Vegades Activat</label>
-                    <input type="number" name="vegades_activat" value="${
-                      point.vegades_activat || 0
-                    }" min="0">
-                </div>
-                <div>
-                    <label>Darrera Activació</label>
-                    <input type="datetime-local" name="darrera_activacio" value="${
-                      point.darrera_activacio
-                        ? point.darrera_activacio.replace(" ", "T")
-                        : ""
-                    }">
-                </div>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Actualitzar</button>
-            <button type="button" class="btn btn-secondary" onclick="cancelEdit('${appId}')">Cancel·lar</button>
-        </div>
-    </form>`;
+      </div>
+    </div>
+
+    <div class="mapes-form-group">
+      <label>Fitxa Monument</label>
+      <input type="url" name="fitxa_monument" value="${point.fitxa_monument || ""}">
+    </div>
+
+    <div class="mapes-coordinates-grid">
+      <div>
+        <label>Vegades Activat</label>
+        <input type="number" name="vegades_activat" value="${point.vegades_activat || 0}" min="0">
+      </div>
+      <div>
+        <label>Darrera Activació</label>
+        <input type="datetime-local" name="darrera_activacio" value="${point.darrera_activacio ? point.darrera_activacio.replace(" ", "T") : ""}">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Actualitzar</button>
+    <button type="button" class="btn btn-secondary" onclick="cancelEdit('${appId}')">Cancel·lar</button>
+  </div>
+</form>
+`;
 
     // Mostrar el panell
     editPanel.style.display = "block";
