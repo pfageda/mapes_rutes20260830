@@ -556,110 +556,172 @@ class MapesPoints {
 
   // NOVA FUNCIÓ: MODE UBICACIÓ
   processLocationMode(data, appId) {
-    console.log("=== MODE UBICACIÓ ===");
+    console.log("=== MODE UBICACIÓ (STRICT: REQUEREIX NOM + POBLACIÓ) ===");
 
-    const locationName = data.location_name.trim();
+    const locationName = (data.location_name || "").trim();
+    const poblacioInput = (data.poblacio || "").trim();
 
-    // ⭐ DEBUG
-    console.log("🔍 PROVÍNCIA REBUDA:", data.provincia);
-    console.log("🔍 TIPUS:", typeof data.provincia);
-    console.log(
-      "🔍 VALOR LOWERCASE:",
-      data.provincia ? data.provincia.toLowerCase() : "NULL",
-    );
+    // REGLA: l'usuari HA d'introduir AMB DOS camps: nom lloc i població
+    if (!locationName || !poblacioInput) {
+      window.mapesUI.showAlert(
+        "Cal indicar tant l'Ubicació com la Població per crear el punt amb el mètode 'Nom lloc'.",
+      );
+      return;
+    }
 
-    // ⭐ DETERMINAR EL CONTEXT ABANS de geocodificar
+    // Determinar context segons provincia (igual que abans)
     let geocodeContext = "";
-
     if (data.provincia) {
       const provinciaLower = data.provincia.toLowerCase().trim();
-      console.log("🔍 PROVÍNCIA NORMALITZADA:", provinciaLower);
-
       switch (provinciaLower) {
         case "new york":
         case "new_york":
           geocodeContext = ", New York, USA";
-          console.log("✅ Context assignat: New York, USA");
           break;
         case "tokyo":
           geocodeContext = ", Tokyo, Japan";
-          console.log("✅ Context assignat: Tokyo, Japan");
           break;
         case "barcelona":
         case "girona":
         case "lleida":
         case "tarragona":
           geocodeContext = ", Catalunya, Espanya";
-          console.log("✅ Context assignat: Catalunya, Espanya");
           break;
         default:
           geocodeContext = ", Catalunya, Espanya";
-          console.warn("⚠️ Província no reconeguda:", provinciaLower);
       }
     } else {
       geocodeContext = ", Catalunya, Espanya";
-      console.warn("⚠️ No hi ha província");
     }
 
-    // ⭐ CONSTRUIR L'ADREÇA COMPLETA
-    const fullAddress = locationName + geocodeContext;
-    console.log("🔍 Geocodificant:", fullAddress);
+    // Construir adreça amb AMB DOS valors per a més precisió
+    const fullAddress = locationName + ", " + poblacioInput + geocodeContext;
+    console.log("🔍 Geocodificant (strict):", fullAddress);
 
-    // Geocodificació amb Google Maps
+    // Geocodificació amb Google Maps (OPCIÓ: REQUIRIM AMBDUES COINCIDÈNCIES)
     if (typeof google !== "undefined" && google.maps && google.maps.Geocoder) {
       const geocoder = new google.maps.Geocoder();
 
-      geocoder.geocode(
-        {
-          address: fullAddress, // ← USAR fullAddress, NO locationName + hardcoded
-        },
-        (results, status) => {
-          console.log("📍 STATUS:", status);
-          console.log("📍 RESULTS:", results);
+      geocoder.geocode({ address: fullAddress }, (results, status) => {
+        console.log("📍 STATUS:", status);
+        console.log("📍 RESULTS:", results);
 
-          if (status === "OK" && results[0]) {
-            // Geocodificació exitosa
-            data.lat = results[0].geometry.location.lat();
-            data.lng = results[0].geometry.location.lng();
-            console.log(
-              `✅ Geocodificat: ${locationName} -> ${data.lat}, ${data.lng}`,
+        if (status === "OK" && results && results.length > 0) {
+          const best = results[0];
+          const location = best.geometry && best.geometry.location;
+          if (!location) {
+            window.mapesUI.showAlert(
+              "No s'ha obtingut una geometria vàlida per aquesta adreça. Revisa la ubicació.",
             );
-          } else {
-            // Si falla, coordenades per defecte segons província
-            console.warn(
-              "⚠️ Geocodificació fallida, usant coordenades per defecte",
-            );
-            console.warn("⚠️ Status:", status);
-
-            // Coordenades per defecte segons província
-            if (data.provincia === "new_york") {
-              data.lat = 40.7128; // Nova York
-              data.lng = -74.006;
-            } else if (data.provincia === "tokyo") {
-              data.lat = 35.6762; // Tokyo
-              data.lng = 139.6503;
-            } else {
-              data.lat = 41.3851; // Barcelona (per defecte)
-              data.lng = 2.1734;
-            }
-            console.log(
-              `⚠️ Usant coordenades per defecte: ${data.lat}, ${data.lng}`,
-            );
+            return;
           }
-          console.log("📤 DADES QUE S'ENVIEN:", data);
-          // Enviar dades amb coordenades
-          this.sendPointData(data, appId);
-        },
-      );
-    } else {
-      // No hi ha Google Maps disponible, usar coordenades per defecte
-      console.warn(
-        "⚠️ Google Maps no disponible, usant coordenades per defecte",
-      );
-      data.lat = 41.3851;
-      data.lng = 2.1734;
 
-      this.sendPointData(data, appId);
+          // Extreure components
+          const comps = best.address_components || [];
+          const getComp = (types) => {
+            for (const t of types) {
+              const found = comps.find(
+                (c) => c.types && c.types.indexOf(t) !== -1,
+              );
+              if (found) return found.long_name;
+            }
+            return null;
+          };
+          const poblacioFromGM =
+            getComp([
+              "locality",
+              "postal_town",
+              "sublocality",
+              "neighborhood",
+              "administrative_area_level_3",
+            ]) || "";
+          const provinciaFromGM = (
+            getComp([
+              "administrative_area_level_2",
+              "administrative_area_level_1",
+            ]) || ""
+          )
+            .replace(/^provincia\s+de\s+/i, "")
+            .trim();
+
+          // COMPROVACIÓ ESTRICTA: AMB TOTES DUES introduïdes, AMBDUES han de coincidir
+          let matchName = false;
+          let matchPoblacio = false;
+
+          // Comprovar nom lloc: ha d'aparèixer al formatted_address o en algun component
+          const qName = locationName.toLowerCase();
+          const formatted = (best.formatted_address || "").toLowerCase();
+          if (formatted.includes(qName)) {
+            matchName = true;
+          } else {
+            for (const c of comps) {
+              if (
+                (c.long_name || "").toLowerCase().includes(qName) ||
+                (c.short_name || "").toLowerCase().includes(qName)
+              ) {
+                matchName = true;
+                break;
+              }
+            }
+          }
+
+          // Comprovar població: exactitud parcial acceptable (contains)
+          if (
+            poblacioFromGM &&
+            poblacioFromGM.toLowerCase().includes(poblacioInput.toLowerCase())
+          ) {
+            matchPoblacio = true;
+          } else {
+            matchPoblacio = false;
+          }
+
+          // DECISIÓ: si qualsevol de les dues NO coincideix, NO crear
+          if (!(matchName && matchPoblacio)) {
+            window.mapesUI.showAlert(
+              "No s'ha pogut verificar tant el nom del lloc com la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.",
+            );
+            console.warn("Geocoding strict fail:", {
+              locationName,
+              poblacioInput,
+              formatted_address: best.formatted_address,
+              poblacioFromGM,
+              provinciaFromGM,
+              matchName,
+              matchPoblacio,
+            });
+            return;
+          }
+
+          // Tot OK: assignar lat/lng i dades de Google i enviar
+          data.lat = location.lat();
+          data.lng = location.lng();
+          data.poblacio = poblacioFromGM || data.poblacio;
+          data.provincia = provinciaFromGM || data.provincia;
+
+          console.log(
+            `✅ Geocodificat i validat (strict): ${fullAddress} -> ${data.lat}, ${data.lng} (${data.poblacio}, ${data.provincia})`,
+          );
+          this.sendPointData(data, appId);
+        } else {
+          console.warn(
+            "⚠️ Geocodificació fallida. Status:",
+            status,
+            "Results:",
+            results,
+          );
+          window.mapesUI.showAlert(
+            "No s'ha pogut trobar aquesta ubicació (" +
+              (status || "error") +
+              "). Revisa el nom del lloc i la població o utilitza el mode Coordenades.",
+          );
+          return;
+        }
+      });
+    } else {
+      window.mapesUI.showAlert(
+        "Google Maps no està disponible. Utilitza el mode Coordenades.",
+      );
+      return;
     }
   }
 
