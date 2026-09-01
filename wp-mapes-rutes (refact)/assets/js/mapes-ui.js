@@ -27,6 +27,23 @@ class MapesUI {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.style.display = "flex";
+      // Si és el modal d'afegir punt, inicialitza el preview de coordenades
+      if (
+        modalId &&
+        modalId.startsWith &&
+        modalId.startsWith("modal-add-point-")
+      ) {
+        const appId = modalId.replace("modal-add-point-", "");
+        if (
+          window.mapesPoints &&
+          typeof window.mapesPoints.initCoordinatesPreview === "function"
+        ) {
+          // petita demora perquè el DOM del modal estigui ben renderitzat
+          setTimeout(() => {
+            window.mapesPoints.initCoordinatesPreview(appId);
+          }, 50);
+        }
+      }
       this.activeModal = modalId;
     } else {
       console.error("Modal no trobat:", modalId);

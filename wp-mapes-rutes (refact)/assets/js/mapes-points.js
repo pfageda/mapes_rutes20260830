@@ -678,6 +678,83 @@ class MapesPoints {
     }
   }
 
+  // Inicia el preview de coordenades: attach input listeners i mostra poblacio/provincia
+  initCoordinatesPreview(appId) {
+    try {
+      const modal = document.getElementById(`modal-add-point-${appId}`);
+      if (!modal) return;
+
+      const latInput = modal.querySelector('input[name="lat"]');
+      const lngInput = modal.querySelector('input[name="lng"]');
+      const locationNameInput = modal.querySelector(
+        'input[name="location_name"]',
+      );
+      const preview = modal.querySelector(`#coords-preview-${appId}`);
+      const poblacioSpan = preview
+        ? preview.querySelector(".preview-poblacio")
+        : null;
+      const provinciaSpan = preview
+        ? preview.querySelector(".preview-provincia")
+        : null;
+
+      if (!latInput || !lngInput || !preview || !poblacioSpan || !provinciaSpan)
+        return;
+
+      let debounceTimer = null;
+      const debounce = (fn, ms = 600) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(fn, ms);
+      };
+
+      const doPreview = () => {
+        const latRaw = latInput.value ? latInput.value.trim() : "";
+        const lngRaw = lngInput.value ? lngInput.value.trim() : "";
+
+        if (!latRaw || !lngRaw) {
+          preview.style.display = "none";
+          return;
+        }
+
+        const lat = parseFloat(latRaw);
+        const lng = parseFloat(lngRaw);
+        if (isNaN(lat) || isNaN(lng)) {
+          preview.style.display = "none";
+          return;
+        }
+
+        const placeName = locationNameInput
+          ? locationNameInput.value.trim()
+          : "";
+
+        // Cridar reverseGeocodeLatLng (ja existent a la classe)
+        this.reverseGeocodeLatLng(lat, lng, placeName)
+          .then(({ poblacio, provincia }) => {
+            poblacioSpan.textContent = poblacio || "—";
+            provinciaSpan.textContent = provincia || "—";
+            preview.style.display = "block";
+          })
+          .catch((err) => {
+            // Mostrem fallback amb guions i el preview visible per indicar que no s'ha obtingut més info
+            poblacioSpan.textContent = "—";
+            provinciaSpan.textContent = "—";
+            preview.style.display = "block";
+            console.warn("Reverse geocode preview fallida:", err);
+          });
+      };
+
+      // Afegir listeners (input) amb debounce
+      latInput.addEventListener("input", () => debounce(doPreview));
+      lngInput.addEventListener("input", () => debounce(doPreview));
+      if (locationNameInput)
+        locationNameInput.addEventListener("input", () => debounce(doPreview));
+
+      // També actualitzar si hi ha valors ja posats quan s'obre (llegeix-los ara)
+      debounce(doPreview, 250);
+    } catch (e) {
+      console.error("initCoordinatesPreview error:", e);
+    }
+  }
+
   // NOVA FUNCIÓ: ENVIAR DADES DEL Monument
   sendPointData(data, appId) {
     console.log("=== ENVIANT DADES DEL Monument ===", data);
