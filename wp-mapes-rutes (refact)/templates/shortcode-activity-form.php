@@ -76,11 +76,11 @@ error_log("Route points data: " . print_r($route_points, true));
                         <?php foreach ($route_points as $index => $point): ?>
                             <option value="<?php echo intval($point->id); ?>" data-order="<?php echo ($index + 1); ?>"
                                 data-name="<?php echo esc_attr($point->title); ?>"
-                                data-poblacio="<?php echo esc_attr($point->Poblacio ?? ''); ?>">
+                                data-poblacio="<?php echo esc_attr($point->poblacio ?? ''); ?>">
 
                                 <?php echo esc_html($point->title); ?>
-                                <?php if (!empty($point->Poblacio)): ?>
-                                    (<?php echo esc_html($point->Poblacio); ?>)
+                                <?php if (!empty($point->poblacio)): ?>
+                                    (<?php echo esc_html($point->poblacio); ?>)
                                 <?php endif; ?>
                             </option>
                         <?php endforeach; ?>

@@ -73,7 +73,7 @@ class MapesPoints {
       lng: parseFloat(lng),
       // CAMPS OBLIGATORIS PELS VALIDACIONS DEL SERVIDOR
       dme: parseInt(point.DME) || 0, // ⭐ CONVERTIR A NUMBER
-      poblacio: (point.Poblacio || "No especificada").trim(),
+      poblacio: (point.poblacio || "No especificada").trim(),
       provincia: point.provincia || "Barcelona",
       fitxa_monument: point.fitxa_monument || "",
       vegades_activat: parseInt(point.vegades_activat) || 0, // ⭐ CONVERTIR A NUMBER
@@ -135,7 +135,7 @@ class MapesPoints {
 
     // Abans d'assignar editContent.innerHTML, calcula valors normalitzats:
     const poblacioValue =
-      (point.poblacio || point.Poblacio || "").trim() || "No especificada";
+      (point.poblacio || point.poblacio || "").trim() || "No especificada";
     const provinciaValue =
       (point.provincia || point.Provincia || "").trim() || "";
 

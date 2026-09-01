@@ -393,7 +393,7 @@ class MapesUser {
             return `
       <div class="route-point-item" onclick="openPointInGoogleMaps('${
         point.title
-      }', '${point.Poblacio}')">
+      }', '${point.poblacio}')">
         <div class="route-point-name">${index + 1}. ${point.title}</div>
         <div class="route-point-coords">
           ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lng).toFixed(
@@ -534,7 +534,7 @@ class MapesUser {
 
       marker.addListener("click", () => {
         // Crear cerca textual del monument + ubicació
-        const poblacio = point.Poblacio || "";
+        const poblacio = point.poblacio || "";
         if (
           !poblacio ||
           poblacio.trim() === "" ||
@@ -712,7 +712,7 @@ class MapesUser {
       this.filteredPoints = this.allPoints.filter(
         (point) =>
           point.title.toLowerCase().includes(term) ||
-          (point.Poblacio && point.Poblacio.toLowerCase().includes(term)) ||
+          (point.poblacio && point.poblacio.toLowerCase().includes(term)) ||
           (point.description && point.description.toLowerCase().includes(term)),
       );
     }
@@ -743,7 +743,7 @@ class MapesUser {
    */
   createPointItemHTML(point) {
     const statusColor = this.getPointActivationColor(point);
-    const location = point.Poblacio ? ` (${point.Poblacio})` : "";
+    const location = point.poblacio ? ` (${point.poblacio})` : "";
 
     return `
     <div class="point-item-user" onclick="window.mapesUser.selectPoint(${
@@ -813,7 +813,7 @@ class MapesUser {
 
     // Afegir event click per obrir Google Maps
     marker.addListener("click", () => {
-      window.openPointInGoogleMaps(point.title, point.Poblacio);
+      window.openPointInGoogleMaps(point.title, point.poblacio);
     });
 
     // Guardar marker
@@ -936,11 +936,11 @@ class MapesUser {
     </div>
     
     ${
-      point.Poblacio
+      point.poblacio
         ? `
     <div class="point-detail-item">
       <strong class="point-detail-label">Població:</strong>
-      <span class="point-detail-value">${this.escapeHtml(point.Poblacio)}</span>
+      <span class="point-detail-value">${this.escapeHtml(point.poblacio)}</span>
     </div>
     `
         : ""
@@ -1044,12 +1044,12 @@ class MapesUser {
       </div>
       
       ${
-        point.Poblacio
+        point.poblacio
           ? `
       <div class="point-detail-item">
         <span class="point-detail-label">Població:</span>
         <span class="point-detail-value">${this.escapeHtml(
-          point.Poblacio,
+          point.poblacio,
         )}</span>
       </div>
       `

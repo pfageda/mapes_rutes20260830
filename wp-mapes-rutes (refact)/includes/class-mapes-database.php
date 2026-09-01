@@ -59,7 +59,7 @@ class WP_Mapes_Database
             lat decimal(10, 6) NOT NULL,
             lng decimal(10, 6) NOT NULL,
             DME int(11) NOT NULL,
-            Poblacio varchar(280) NOT NULL,
+            poblacio varchar(280) NOT NULL,
             provincia varchar(140) NOT NULL,
             fitxa_monument varchar(500) NOT NULL,
             vegades_activat int(11) NOT NULL DEFAULT 0,
@@ -305,7 +305,7 @@ class WP_Mapes_Database
                 'lng' => floatval($data['lng']),
                 // ⭐ CORREGIR AQUESTS CAMPS PER USAR LES DADES DEL FORMULARI
                 'DME' => !empty($data['dme']) ? intval($data['dme']) : 0,
-                'Poblacio' => sanitize_text_field($data['poblacio'] ?? 'No especificada'),
+                'poblacio' => sanitize_text_field($data['poblacio'] ?? 'No especificada'),
                 'provincia' => sanitize_text_field($data['provincia'] ?? 'Barcelona'),
                 'fitxa_monument' => sanitize_url($data['fitxa_monument'] ?? ''),
                 'vegades_activat' => intval($data['vegades_activat'] ?? 0),
@@ -342,7 +342,7 @@ class WP_Mapes_Database
                 'lat' => floatval($data['lat']),
                 'lng' => floatval($data['lng']),
                 'DME' => isset($data['dme']) ? intval($data['dme']) : 0,  // Usar isset() en lloc de !empty()
-                'Poblacio' => sanitize_text_field($data['poblacio']),
+                'poblacio' => sanitize_text_field($data['poblacio']),
                 'provincia' => sanitize_text_field($data['provincia']),
                 'fitxa_monument' => sanitize_url($data['fitxa_monument']),
                 'vegades_activat' => intval($data['vegades_activat'] ?? 0),
@@ -679,13 +679,13 @@ class WP_Mapes_Database
         $selected_monument_info = "";
         if ($selected_monument_id) {
             $selected_monument = $wpdb->get_row($wpdb->prepare(
-                "SELECT title, Poblacio, lat, lng FROM $points_table WHERE id = %d",
+                "SELECT title, poblacio, lat, lng FROM $points_table WHERE id = %d",
                 $selected_monument_id
             ));
 
             if ($selected_monument) {
                 $monument_name = $selected_monument->title;
-                $monument_location = !empty($selected_monument->Poblacio) ? " ({$selected_monument->Poblacio})" : "";
+                $monument_location = !empty($selected_monument->poblacio) ? " ({$selected_monument->poblacio})" : "";
 
                 $google_maps_url = "https://www.google.com/maps/search/?api=1&query=" .
                     urlencode($monument_name . $monument_location) .
@@ -708,7 +708,7 @@ class WP_Mapes_Database
         $points_info = "";
         if ($route) {
             $points = $wpdb->get_results($wpdb->prepare("
-            SELECT p.title, p.Poblacio, rp.weight, rp.order_num
+            SELECT p.title, p.poblacio, rp.weight, rp.order_num
             FROM $route_points_table rp 
             JOIN $points_table p ON rp.point_id = p.id 
             WHERE rp.route_id = %d 
@@ -723,7 +723,7 @@ class WP_Mapes_Database
                 <ol style='margin: 0; padding-left: 20px; line-height: 1.5;'>";
 
                 foreach ($points as $point) {
-                    $poblacio = !empty($point->Poblacio) ? " ({$point->Poblacio})" : "";
+                    $poblacio = !empty($point->poblacio) ? " ({$point->poblacio})" : "";
                     $weight = $point->weight ? " - Pes: {$point->weight}%" : "";
                     $points_info .= "<li style='margin: 5px 0;'>{$point->title}{$poblacio}{$weight}</li>";
                 }

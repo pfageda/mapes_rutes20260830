@@ -376,13 +376,13 @@ class WP_Mapes_Ajax
             if ($conflicte) {
                 // Obtenir nom del monument per al missatge
                 $monument = $wpdb->get_row($wpdb->prepare("
-                SELECT title, Poblacio 
+                SELECT title, poblacio 
                 FROM {$wpdb->prefix}mapes_points 
                 WHERE id = %d
             ", $selected_monument));
 
                 $monument_nom = $monument ?
-                    $monument->title . ' (' . $monument->Poblacio . ')' :
+                    $monument->title . ' (' . $monument->poblacio . ')' :
                     'Monument seleccionat';
 
                 wp_send_json_error("❌ El monument '{$monument_nom}' ja està ocupat per l'activació '{$conflicte->indicatiu}' el dia {$data_activitat} a l'horari '{$horari}'. Si us plau, seleccioneu una altra data o horari.");
@@ -476,7 +476,7 @@ class WP_Mapes_Ajax
         global $wpdb;
 
         $conflicte = $wpdb->get_row($wpdb->prepare("
-        SELECT a.id, a.indicatiu, p.title, p.Poblacio
+        SELECT a.id, a.indicatiu, p.title, p.poblacio
         FROM {$wpdb->prefix}mapes_activitats a
         INNER JOIN {$wpdb->prefix}mapes_activitat_points ap ON a.id = ap.activitat_id
         INNER JOIN {$wpdb->prefix}mapes_points p ON ap.point_id = p.id
@@ -489,8 +489,8 @@ class WP_Mapes_Ajax
 
         if ($conflicte) {
             $monument_nom = $conflicte->title;
-            if ($conflicte->Poblacio) {
-                $monument_nom .= ' (' . $conflicte->Poblacio . ')';
+            if ($conflicte->poblacio) {
+                $monument_nom .= ' (' . $conflicte->poblacio . ')';
             }
 
             wp_send_json_error("Monument '{$monument_nom}' ja ocupat el {$data} ({$horari}) per l'activació '{$conflicte->indicatiu}'");
