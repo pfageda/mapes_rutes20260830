@@ -64,11 +64,11 @@
                     <div class="mapes-coordinates-grid">
                         <div>
                             <label>Latitud *</label>
-                            <input type="number" step="any" name="lat" placeholder="41.4036">
+                            <input type="number" step="any" name="lat" placeholder="Ex: 41.4036">
                         </div>
                         <div>
                             <label>Longitud *</label>
-                            <input type="number" step="any" name="lng" placeholder="2.1744">
+                            <input type="number" step="any" name="lng" placeholder="Ex: 2.1744">
                         </div>
                     </div>
                     <!-- NO hi ha camps poblacio/provincia aquí -->

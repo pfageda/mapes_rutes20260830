@@ -106,19 +106,78 @@ class MapesUI {
     const locationInput = document.getElementById(`location-input-${appId}`);
     const coordInput = document.getElementById(`coordinates-input-${appId}`);
     const toggleBtns = document.querySelectorAll(
-      `#modal-add-point-${appId} .mapes-input-toggle button`
+      `#modal-add-point-${appId} .mapes-input-toggle button`,
     );
+    // trobar els camps dins del modal
+    const modal = document.getElementById(`modal-add-point-${appId}`);
+    const poblacioField = modal
+      ? modal.querySelector('input[name="poblacio"]')
+      : null;
+    const provinciaField = modal
+      ? modal.querySelector('select[name="provincia"]')
+      : null;
+    const locationNameField = modal
+      ? modal.querySelector('input[name="location_name"]')
+      : null;
+    const latField = modal ? modal.querySelector('input[name="lat"]') : null;
+    const lngField = modal ? modal.querySelector('input[name="lng"]') : null;
 
     if (type === "location") {
       locationInput.style.display = "block";
       coordInput.style.display = "none";
       toggleBtns[0].classList.add("active");
       toggleBtns[1].classList.remove("active");
+
+      // habilitar camps de "location"
+      if (poblacioField) {
+        poblacioField.required = true;
+        poblacioField.disabled = false;
+      }
+      if (provinciaField) {
+        provinciaField.required = true;
+        provinciaField.disabled = false;
+      }
+      if (locationNameField) {
+        locationNameField.disabled = false;
+      }
+
+      // deshabilitar camps de coordenades
+      if (latField) {
+        latField.required = false;
+        latField.disabled = true;
+      }
+      if (lngField) {
+        lngField.required = false;
+        lngField.disabled = true;
+      }
     } else {
       locationInput.style.display = "none";
       coordInput.style.display = "block";
       toggleBtns[0].classList.remove("active");
       toggleBtns[1].classList.add("active");
+
+      // deshabilitar camps de "location" (no seran validads)
+      if (poblacioField) {
+        poblacioField.required = false;
+        poblacioField.disabled = true;
+      }
+      if (provinciaField) {
+        provinciaField.required = false;
+        provinciaField.disabled = true;
+      }
+      if (locationNameField) {
+        locationNameField.disabled = true;
+      }
+
+      // habilitar camps de coordenades
+      if (latField) {
+        latField.required = true;
+        latField.disabled = false;
+      }
+      if (lngField) {
+        lngField.required = true;
+        lngField.disabled = false;
+      }
     }
   }
 
