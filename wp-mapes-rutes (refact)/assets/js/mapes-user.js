@@ -388,10 +388,18 @@ class MapesUser {
         pointsContainer.innerHTML = route.points
           .map((rp, index) => {
             const point = this.points.find((p) => p.id == rp.point_id);
+            const esc = (s) =>
+              ("" + (s || "")).replace(/'/g, "\\'").replace(/\n/g, " ");
+            const titleEsc = esc(point.title);
+            const formattedEsc = esc(
+              point.formatted_address || point.location_name || "",
+            );
+            const poblacioEsc = esc(point.Poblacio || point.poblacio || "");
+            const provinciaEsc = esc(point.provincia || "");
             if (!point) return "";
 
             return `
-     <div class="route-point-item" onclick="openPointInGoogleMaps('${(point.title || "").replace(/'/g, "\\'")}', ${parseFloat(point.lat)}, ${parseFloat(point.lng)})">
+    <div class="route-point-item" onclick="openPointInGoogleMaps('${titleEsc}','${formattedEsc}','${poblacioEsc}','${provinciaEsc}', ${parseFloat(point.lat)}, ${parseFloat(point.lng)})">
     <div class="route-point-name">${index + 1}. ${point.title}</div>
     <div class="route-point-coords">
       ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lng).toFixed(4)}
@@ -526,37 +534,21 @@ class MapesUser {
       });
 
       marker.addListener("click", () => {
-        const name = point.title || "";
+        const title = point.title || "";
+        const formatted = point.formatted_address || point.location_name || "";
+        const poblacio = point.Poblacio || point.poblacio || "";
+        const provincia = point.provincia || "";
         const lat = parseFloat(point.lat);
         const lng = parseFloat(point.lng);
 
-        // Prova de geocodificar pel nom; si no hi ha resultats => fallback a coordenades
-        const tryLocateByName = (queryName, lat, lng) => {
-          if (
-            typeof google !== "undefined" &&
-            google.maps &&
-            google.maps.Geocoder
-          ) {
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ address: queryName }, (results, status) => {
-              if (status === "OK" && results && results.length > 0) {
-                const addr = results[0].formatted_address || queryName;
-                const url = `https://www.google.com/maps/search/${encodeURIComponent(addr)}?hl=ca&gl=ES`;
-                window.open(url, "_blank");
-              } else {
-                // Fallback: obrir per coordenades
-                const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + "," + lng)}`;
-                window.open(url, "_blank");
-              }
-            });
-          } else {
-            // Si no hi ha l'API JS, obrir pel nom (no hi ha forma de validar) i confiar en Google Search
-            const url = `https://www.google.com/maps/search/${encodeURIComponent(queryName)}?hl=ca&gl=ES`;
-            window.open(url, "_blank");
-          }
-        };
-
-        tryLocateByName(name, lat, lng);
+        window.openPointInGoogleMaps(
+          title,
+          formatted,
+          poblacio,
+          provincia,
+          lat,
+          lng,
+        );
       });
       this.markers.push(marker);
     });
@@ -816,13 +808,21 @@ class MapesUser {
     this.map.setZoom(15);
 
     // Afegir event click per obrir Google Maps
-    // abans: marker.addListener("click", () => { window.openPointInGoogleMaps(point.title, point.Poblacio); });
     marker.addListener("click", () => {
-      // Reutilitzar la mateixa funció global pergeocodificar+fallback per coordenades
+      const title = point.title || "";
+      const formatted = point.formatted_address || point.location_name || "";
+      const poblacio = point.Poblacio || point.poblacio || "";
+      const provincia = point.provincia || "";
+      const lat = parseFloat(point.lat);
+      const lng = parseFloat(point.lng);
+
       window.openPointInGoogleMaps(
-        point.title,
-        parseFloat(point.lat),
-        parseFloat(point.lng),
+        title,
+        formatted,
+        poblacio,
+        provincia,
+        lat,
+        lng,
       );
     });
 
@@ -1290,50 +1290,87 @@ window.finalitzarActivitat = function (appId) {
 
 // Funció per obrir monument a Google Maps (reutilitzant lògica dels markers)
 // Nova versió: primer prova per nom; si no troba resultats -> fallback per coordenades
-window.openPointInGoogleMaps = function (pointTitle, pointLat, pointLng) {
-  const name = (pointTitle || "").trim();
-  const lat = parseFloat(pointLat);
-  const lng = parseFloat(pointLng);
+// Nova versió: prova formatted_address → (title + poblacio + provincia) → coords
+window.openPointInGoogleMaps = function (
+  pointTitle,
+  pointFormattedAddress,
+  pointPoblacio,
+  pointProvincia,
+  pointLat,
+  pointLng,
+) {
+  const title = (pointTitle || "").trim();
+  const formatted = (pointFormattedAddress || "").trim();
+  const poblacio = (pointPoblacio || "").trim();
+  const provincia = (pointProvincia || "").trim();
+  const lat = isFinite(pointLat) ? parseFloat(pointLat) : NaN;
+  const lng = isFinite(pointLng) ? parseFloat(pointLng) : NaN;
 
-  if (!name && (isNaN(lat) || isNaN(lng))) {
-    alert("No hi ha suficients dades per obrir el punt a Google Maps.");
+  if (!title && (isNaN(lat) || isNaN(lng))) {
+    alert("No hi ha dades suficients per obrir aquest punt a Google Maps.");
     return;
   }
 
-  const tryByNameThenCoords = (name, lat, lng) => {
-    if (
-      name &&
-      typeof google !== "undefined" &&
-      google.maps &&
-      google.maps.Geocoder
-    ) {
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: name }, (results, status) => {
-        if (status === "OK" && results && results.length > 0) {
-          const addr = results[0].formatted_address || name;
-          const url = `https://www.google.com/maps/search/${encodeURIComponent(addr)}?hl=ca&gl=ES`;
-          window.open(url, "_blank");
-        } else if (!isNaN(lat) && !isNaN(lng)) {
-          const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + "," + lng)}`;
-          window.open(url, "_blank");
-        } else {
-          // si no hi ha coordenades, obrir per nom encara que la geocodificació fallés
-          const url = `https://www.google.com/maps/search/${encodeURIComponent(name)}?hl=ca&gl=ES`;
-          window.open(url, "_blank");
-        }
-      });
-    } else if (name) {
-      // Sense l'API de Google disponible, obrir per nom
-      const url = `https://www.google.com/maps/search/${encodeURIComponent(name)}?hl=ca&gl=ES`;
-      window.open(url, "_blank");
-    } else {
-      // Nom no disponible -> usar coordenades
+  // Construir candidats en l'ordre que volem provar
+  const candidates = [];
+  if (formatted) candidates.push(formatted);
+
+  if (title) {
+    let titleWithPlace = title;
+    if (poblacio) titleWithPlace += " " + poblacio;
+    if (provincia) titleWithPlace += (poblacio ? ", " : ", ") + provincia;
+    candidates.push(titleWithPlace);
+  }
+
+  // Obre URL amb coordenades
+  const openCoordsUrl = () => {
+    if (!isNaN(lat) && !isNaN(lng)) {
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + "," + lng)}`;
       window.open(url, "_blank");
+    } else if (title) {
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(title)}?hl=ca&gl=ES`;
+      window.open(url, "_blank");
+    } else {
+      alert("No s'ha pogut localitzar el punt.");
     }
   };
 
-  tryByNameThenCoords(name, lat, lng);
+  // Si tenim l'API JS de Google, provem geocoder seqüencialment
+  if (typeof google !== "undefined" && google.maps && google.maps.Geocoder) {
+    const geocoder = new google.maps.Geocoder();
+    let i = 0;
+    const tryNext = () => {
+      if (i >= candidates.length) {
+        openCoordsUrl();
+        return;
+      }
+      const q = candidates[i++];
+      geocoder.geocode({ address: q }, (results, status) => {
+        if (status === "OK" && results && results.length > 0) {
+          const addr = results[0].formatted_address || q;
+          const url = `https://www.google.com/maps/search/${encodeURIComponent(addr)}?hl=ca&gl=ES`;
+          window.open(url, "_blank");
+        } else {
+          tryNext();
+        }
+      });
+    };
+    tryNext();
+  } else {
+    // Sense l'API, obrir la millor opció disponible sense validar
+    if (formatted) {
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(formatted)}?hl=ca&gl=ES`;
+      window.open(url, "_blank");
+    } else if (title) {
+      let titleWithPlace = title;
+      if (poblacio) titleWithPlace += " " + poblacio;
+      if (provincia) titleWithPlace += (poblacio ? ", " : ", ") + provincia;
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(titleWithPlace)}?hl=ca&gl=ES`;
+      window.open(url, "_blank");
+    } else {
+      openCoordsUrl();
+    }
+  }
 };
 window.getPointActivationColor = function (point) {
   return window.mapesUser.getPointActivationColor(point);

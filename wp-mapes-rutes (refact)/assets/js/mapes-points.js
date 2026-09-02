@@ -517,7 +517,7 @@ class MapesPoints {
     data.lng = lng;
 
     // Si hi ha Google Maps disponible, fem reverse geocoding per omplir poblacio/provincia
-    const placeName = (data.location_name || "").trim();
+    const placeName = (data.title || "").trim();
 
     if (typeof google !== "undefined" && google.maps && google.maps.Geocoder) {
       // Opcional: mostrar un missatge curt a l'usuari
@@ -558,7 +558,7 @@ class MapesPoints {
   processLocationMode(data, appId) {
     console.log("=== MODE UBICACIÓ (STRICT: REQUEREIX NOM + POBLACIÓ) ===");
 
-    const locationName = (data.location_name || "").trim();
+    const locationName = (data.title || "").trim();
     const poblacioInput = (data.poblacio || "").trim();
 
     // REGLA: l'usuari HA d'introduir AMB DOS camps: nom lloc i població

@@ -35,8 +35,6 @@
 
                 <!-- MODE UBICACIÓ PER NOM -->
                 <div class="mapes-form-group" id="location-input-<?php echo $app_id; ?>">
-                    <label>Ubicació *</label>
-                    <input type="text" name="location_name" placeholder="ex: Sagrada Familia Barcelona">
 
                     <!-- ⭐ NOUS CAMPS - NOMÉS PER UBICACIÓ PER NOM -->
                     <div style="margin-top: 15px;">
