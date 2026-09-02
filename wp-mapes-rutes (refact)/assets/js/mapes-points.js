@@ -651,7 +651,7 @@ class MapesPoints {
           // Comprovar nom lloc: ha d'aparèixer al formatted_address o en algun component
           const qName = locationName.toLowerCase();
           const formatted = (best.formatted_address || "").toLowerCase();
-          if (formatted.includes(qName)) {
+          if (/\d/.test(formatted)) {
             matchName = true;
           } else {
             for (const c of comps) {
@@ -674,7 +674,18 @@ class MapesPoints {
           } else {
             matchPoblacio = false;
           }
-
+          console.log(
+            matchName,
+            matchPoblacio,
+            "qName" + qName,
+            "formatted" + formatted,
+            {
+              locationName,
+              poblacioInput,
+              poblacioFromGM,
+              provinciaFromGM,
+            },
+          );
           // DECISIÓ: si qualsevol de les dues NO coincideix, NO crear
           if (!(matchName && matchPoblacio)) {
             window.mapesUI.showAlert(
