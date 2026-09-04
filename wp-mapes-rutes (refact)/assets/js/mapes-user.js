@@ -1428,6 +1428,7 @@ window.openPointInGoogleMaps = function (
       console.log("Geocode try:", q);
 
       // Prova amb geocoder
+      // Prova amb geocoder
       geocoder.geocode({ address: q }, (results, status) => {
         console.log(
           "Geocode response for:",
@@ -1438,15 +1439,42 @@ window.openPointInGoogleMaps = function (
         if (status === "OK" && results && results.length > 0) {
           const r = results[0];
           const formatted_addr = r.formatted_address || "";
+          const placeId = r.place_id || "";
           console.log("formatted_address:", formatted_addr);
+          console.log("place_id:", placeId);
           console.log("address_components:", r.address_components);
+
+          // NOVA LÍNIA IMPORTANT: si hi ha place_id, obre la fitxa del POI i surt
+          if (placeId) {
+            const url = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+            window.open(url, "_blank");
+            console.log("Obert per place_id:", placeId, "->", url);
+            return;
+          }
+
+          // Helper: obrir la millor URL per al resultat (preferir place_id -> fitxa del POI)
+          const openResult = () => {
+            if (placeId) {
+              // Obre la fitxa del lloc (nom, fotos, reseñes)
+              const url = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+              window.open(url, "_blank");
+            } else {
+              // Si no hi ha place_id: preferim obrir la cerca amb la consulta original 'q'
+              // perquè el formatted_address sovint és només la direcció del carrer
+              const addrForUrl =
+                formatted_addr &&
+                q &&
+                formatted_addr.toLowerCase().includes((q || "").toLowerCase())
+                  ? formatted_addr
+                  : q || formatted_addr;
+              const url = `https://www.google.com/maps/search/${encodeURIComponent(addrForUrl)}?hl=ca&gl=ES`;
+              window.open(url, "_blank");
+            }
+          };
 
           // 1) Si l'usuari va proporcionar formatted_address, acceptar si està contingut al result
           if (formatted && safeContains(formatted_addr, formatted)) {
-            window.open(
-              `https://www.google.com/maps/search/${encodeURIComponent(formatted_addr)}?hl=ca&gl=ES`,
-              "_blank",
-            );
+            openResult();
             return;
           }
 
@@ -1483,14 +1511,11 @@ window.openPointInGoogleMaps = function (
 
           // Acceptar si el nom està present i (poblacio/provincia coincideixen si s'han subministrat)
           if (namePresent && poblacioMatch && provinciaMatch) {
-            window.open(
-              `https://www.google.com/maps/search/${encodeURIComponent(formatted_addr)}?hl=ca&gl=ES`,
-              "_blank",
-            );
+            openResult();
             return;
           }
 
-          // Cass especials: el geocoder pot retornar un nom diferent (ex: "Plaça de Santa Maria, 1, Ciutat Vella, 08003 Barcelona, Espanya")
+          // Cass especials: el geocoder pot retornar un nom diferent (ex: "Plaça de Santa Maria,...")
           // Acceptar també si la població/província apareixen al formatted_address i algun component conté parcialment el title
           if (
             (poblacio && safeContains(formatted_addr, poblacio)) ||
@@ -1503,10 +1528,7 @@ window.openPointInGoogleMaps = function (
                 safeContains(c.long_name || "", title),
               )
             ) {
-              window.open(
-                `https://www.google.com/maps/search/${encodeURIComponent(formatted_addr)}?hl=ca&gl=ES`,
-                "_blank",
-              );
+              openResult();
               return;
             }
           }
