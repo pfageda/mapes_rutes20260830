@@ -374,7 +374,7 @@ class MapesPoints {
       description: data.description ? data.description.trim() : "",
       lat: parseFloat(data.lat),
       lng: parseFloat(data.lng),
-      dme: data.dme ? data.dme : "no se",
+      dme: data.dme ? data.dme : "",
       poblacio: data.poblacio ? data.poblacio.trim() : "No especificada",
       provincia: data.provincia,
       fitxa_monument: data.fitxa_monument ? data.fitxa_monument.trim() : "",
