@@ -166,6 +166,7 @@ class MapesPoints {
     placeholder="08019"
     class="mapes-input-dme"
     autocomplete="off"
+    
   />
 </div>
 
@@ -662,6 +663,7 @@ class MapesPoints {
           // Comprovar nom lloc: ha d'aparèixer al formatted_address o en algun component
           const qName = locationName.toLowerCase();
           const formatted = (best.formatted_address || "").toLowerCase();
+          //Si a algun component hi ha un número, considerem que és una adreça i no fem matchName, ja que el nom del lloc no hauria de contenir números. Això evita falsos positius amb carrers o adreces.
           if (/\d/.test(formatted)) {
             matchName = true;
           } else {
@@ -688,8 +690,8 @@ class MapesPoints {
           console.log(
             matchName,
             matchPoblacio,
-            "qName" + qName,
-            "formatted" + formatted,
+            "qName " + qName,
+            "formatted " + formatted,
             {
               locationName,
               poblacioInput,
