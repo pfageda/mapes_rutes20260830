@@ -79,7 +79,7 @@ class WP_Mapes_Ajax
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
         $provincia = sanitize_text_field($_POST['provincia'] ?? '');
-        $dme = sanitize_text_field($_POST['dme'] ?? '');
+        $dme = sanitize_text_field($_POST['dme'] ?? null);
 
         error_log("POST REBUT: " . print_r($_POST, true));
 
@@ -136,7 +136,7 @@ class WP_Mapes_Ajax
         error_log("ID: $id, Title: $title");
         error_log("Coordenades rebudes: LAT=$lat, LNG=$lng");
 
-        $dme_raw = $_POST['dme'] ?? '';
+        $dme_raw = $_POST['dme'] ?? null;
         $dme = null;
 
         if (trim($dme_raw) !== '') {
