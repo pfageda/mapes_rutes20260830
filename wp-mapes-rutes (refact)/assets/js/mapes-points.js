@@ -72,7 +72,7 @@ class MapesPoints {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       // CAMPS OBLIGATORIS PELS VALIDACIONS DEL SERVIDOR
-      dme: parseInt(point.dme) || 0, // ⭐ CONVERTIR A NUMBER
+      dme: point.dme || "", // ⭐ CONVERTIR A NUMBER
       poblacio: (point.poblacio || "No especificada").trim(),
       provincia: point.provincia || "Barcelona",
       fitxa_monument: point.fitxa_monument || "",
@@ -162,7 +162,7 @@ class MapesPoints {
     inputmode="numeric"
     pattern="^[0-9]{1,5}$"
     maxlength="5"
-    value="${point.dme || ""}"
+    value="${(point.dme ?? "").toString().replace(/"/g, '"')}"
     placeholder="08019"
     class="mapes-input-dme"
     autocomplete="off"
@@ -373,7 +373,7 @@ class MapesPoints {
       description: data.description ? data.description.trim() : "",
       lat: parseFloat(data.lat),
       lng: parseFloat(data.lng),
-      dme: data.dme ? parseInt(data.dme) : 0,
+      dme: data.dme ? data.dme : "no se",
       poblacio: data.poblacio ? data.poblacio.trim() : "No especificada",
       provincia: data.provincia,
       fitxa_monument: data.fitxa_monument ? data.fitxa_monument.trim() : "",
