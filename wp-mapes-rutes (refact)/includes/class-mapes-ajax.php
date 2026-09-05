@@ -79,6 +79,7 @@ class WP_Mapes_Ajax
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
         $provincia = sanitize_text_field($_POST['provincia'] ?? '');
+        $dme = sanitize_text_field($_POST['dme'] ?? '');
 
         error_log("POST REBUT: " . print_r($_POST, true));
 
@@ -101,7 +102,8 @@ class WP_Mapes_Ajax
             'lat' => $lat,
             'lng' => $lng,
             'poblacio' => $poblacio,
-            'provincia' => $provincia
+            'provincia' => $provincia,
+            'dme' => $dme !== null ? (string) $dme : null
         ));
 
         if ($point_id) {
@@ -135,13 +137,28 @@ class WP_Mapes_Ajax
         error_log("Coordenades rebudes: LAT=$lat, LNG=$lng");
 
         $dme_raw = $_POST['dme'] ?? '';
-        $dme = 0;
+        $dme = null;
+
         if (trim($dme_raw) !== '') {
-            $dme = intval($dme_raw);
-            if ($dme < 0) {
-                wp_send_json_error('El DME ha de ser positiu si s\'indica');
+            // Netejar: conservar només dígits
+            $dme_digits = preg_replace('/\D+/', '', (string) $dme_raw);
+
+            if ($dme_digits === '') {
+                wp_send_json_error('El camp DME ha de contenir dígits vàlids');
                 return;
             }
+
+            // Si la teva columna és VARCHAR(5), normalitzem a 5 caràcters fent LPAD
+            if (strlen($dme_digits) > 5) {
+                // Si vols permetre més de 5, canvia la lògica; per ara rebutgem
+                wp_send_json_error('El DME té massa dígits (màxim 5)');
+                return;
+            }
+
+            // Pad amb zeros a l'esquerra per garantir format "08019"
+            $dme = str_pad($dme_digits, 5, '0', STR_PAD_LEFT);
+        } else {
+            $dme = null; // no proporcionat
         }
 
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');

@@ -58,7 +58,7 @@ class WP_Mapes_Database
             description text,
             lat decimal(10, 6) NOT NULL,
             lng decimal(10, 6) NOT NULL,
-            DME int(11) NOT NULL,
+            dme int(11) NOT NULL,
             poblacio varchar(280) NOT NULL,
             provincia varchar(140) NOT NULL,
             fitxa_monument varchar(500) NOT NULL,
@@ -69,7 +69,7 @@ class WP_Mapes_Database
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY lat_lng (lat, lng),
-            KEY DME (DME)
+            KEY dme (dme)
         ) $charset_collate;";
 
         // Taula de relació ruta-monuments (funciona amb dbDelta)
@@ -169,10 +169,36 @@ class WP_Mapes_Database
             error_log('TAULA ACTIVITAT_POINTS JA EXISTEIX');
         }
 
-        // AFEGIR AQUESTES NOVES SECCIONS AQUÍ:
+        // CREAR TAULA DE MAPPING DME
+        $dme_table = $wpdb->prefix . 'mapes_dme_map';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$dme_table'");
 
-        // No creem la taula mapes_activacions automàticament.
-// La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
+        if ($table_exists != $dme_table) {
+            $dme_sql = "CREATE TABLE $dme_table (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        provincia VARCHAR(191) NOT NULL,
+        poblacio VARCHAR(191) NOT NULL,
+        campdme VARCHAR(5) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uk_provincia_poblacio (provincia(100), poblacio(100)),
+        KEY idx_provincia (provincia(100)),
+        KEY idx_poblacio (poblacio(100))
+    ) $charset_collate";
+
+            $result = $wpdb->query($dme_sql);
+            if ($result === false) {
+                error_log('ERROR CREANT TAULA DME_MAP: ' . $wpdb->last_error);
+                error_log('SQL: ' . $dme_sql);
+            } else {
+                error_log('TAULA DME_MAP CREADA CORRECTAMENT');
+            }
+        } else {
+            error_log('TAULA DME_MAP JA EXISTEIX');
+        }
+
+
+        // La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
         error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'mapes_activacions; la taula està consolidada a mapes_activitats.');
 
         // CREAR TAULA DE DOCUMENTS D'ACTIVACIONS
@@ -304,7 +330,7 @@ class WP_Mapes_Database
                 'lat' => floatval($data['lat']),
                 'lng' => floatval($data['lng']),
                 // ⭐ CORREGIR AQUESTS CAMPS PER USAR LES DADES DEL FORMULARI
-                'DME' => !empty($data['dme']) ? intval($data['dme']) : 0,
+                'dme' => isset($data['dme']) ? sanitize_text_field($data['dme']) : null,
                 'poblacio' => sanitize_text_field($data['poblacio'] ?? 'No especificada'),
                 'provincia' => sanitize_text_field($data['provincia'] ?? 'Barcelona'),
                 'fitxa_monument' => sanitize_url($data['fitxa_monument'] ?? ''),
@@ -312,7 +338,7 @@ class WP_Mapes_Database
                 'darrera_activacio' => $data['darrera_activacio'] ?? null,
                 'indicatiu_activacio' => sanitize_text_field($data['indicatiu_activacio'] ?? '')
             ),
-            array('%s', '%s', '%f', '%f', '%d', '%s', '%s', '%s', '%d', '%s', '%s')
+            array('%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
         );
 
         if ($result === false) {
@@ -341,7 +367,7 @@ class WP_Mapes_Database
                 'description' => sanitize_textarea_field($data['description'] ?? ''),
                 'lat' => floatval($data['lat']),
                 'lng' => floatval($data['lng']),
-                'DME' => isset($data['dme']) ? intval($data['dme']) : 0,  // Usar isset() en lloc de !empty()
+                'dme' => isset($data['dme']) ? sanitize_text_field($data['dme']) : null,
                 'poblacio' => sanitize_text_field($data['poblacio']),
                 'provincia' => sanitize_text_field($data['provincia']),
                 'fitxa_monument' => sanitize_url($data['fitxa_monument']),
@@ -350,7 +376,7 @@ class WP_Mapes_Database
                 'indicatiu_activacio' => sanitize_text_field($data['indicatiu_activacio'])
             ),
             array('id' => $id),
-            array('%s', '%s', '%f', '%f', '%d', '%s', '%s', '%s', '%d', '%s', '%s'),
+            array('%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s'),
             array('%d')
         );
 

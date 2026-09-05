@@ -72,7 +72,7 @@ class MapesPoints {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       // CAMPS OBLIGATORIS PELS VALIDACIONS DEL SERVIDOR
-      dme: parseInt(point.DME) || 0, // ⭐ CONVERTIR A NUMBER
+      dme: parseInt(point.dme) || 0, // ⭐ CONVERTIR A NUMBER
       poblacio: (point.poblacio || "No especificada").trim(),
       provincia: point.provincia || "Barcelona",
       fitxa_monument: point.fitxa_monument || "",
@@ -154,9 +154,20 @@ class MapesPoints {
     </div>
 
     <div class="mapes-form-group">
-      <label>DME</label>
-      <input type="number" name="dme" value="${point.DME || 0}">
-    </div>
+  <label for="dme-input">DME</label>
+  <input
+    id="dme-input"
+    name="dme"
+    type="text"
+    inputmode="numeric"
+    pattern="^[0-9]{1,5}$"
+    maxlength="5"
+    value="${point.dme || ""}"
+    placeholder="08019"
+    class="mapes-input-dme"
+    autocomplete="off"
+  />
+</div>
 
     <div class="mapes-coordinates-grid">
       <div>
