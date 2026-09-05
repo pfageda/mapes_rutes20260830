@@ -58,7 +58,7 @@ class WP_Mapes_Database
             description text,
             lat decimal(10, 6) NOT NULL,
             lng decimal(10, 6) NOT NULL,
-            dme int(11) NOT NULL,
+            dme varchar(5) DEFAULT NULL,
             poblacio varchar(280) NOT NULL,
             provincia varchar(140) NOT NULL,
             fitxa_monument varchar(500) NOT NULL,
