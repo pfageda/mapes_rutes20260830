@@ -137,15 +137,19 @@ class MapesPoints {
     const poblacioValue =
       (point.poblacio || point.poblacio || "").trim() || "No especificada";
     const provinciaValue =
-      (point.provincia || point.Provincia || "").trim() || "";
+      (point.provincia || point.provincia || "").trim() || "";
 
     // Ara crea l'HTML utilitzant aquestes variables
     editContent.innerHTML = `
 <form class="mapes-edit-form" onsubmit="mapesPoints.submitInlineEdit('${pointId}', event)">
   <div class="mapes-edit-form-left">
     <div class="mapes-form-group">
-      <label>Nom *</label>
+      <label>Nom</label>
       <input type="text" name="title" value="${(point.title || "").replace(/"/g, "&quot;")}" required>
+    </div>
+     <div class="mapes-form-group">
+      <label>Codi</label>
+      <input type="text" name="codi" value="${(point.codi || "").replace(/"/g, "&quot;")}" placeholder="Codi del monument (opcional)">
     </div>
 
     <div class="mapes-form-group">
