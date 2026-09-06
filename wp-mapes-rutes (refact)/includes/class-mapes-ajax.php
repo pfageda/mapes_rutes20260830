@@ -79,6 +79,7 @@ class WP_Mapes_Ajax
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
         $provincia = sanitize_text_field($_POST['provincia'] ?? '');
+        $codi = isset($_POST['codi']) ? sanitize_text_field($_POST['codi']) : null;
         $dme = isset($_POST['dme']) ? sanitize_text_field($_POST['dme']) : null;
 
         error_log("POST REBUT: " . print_r($_POST, true));
@@ -147,6 +148,7 @@ class WP_Mapes_Ajax
         // ⭐ CRIDAR insert_point AMB TOTS ELS CAMPS (dme pot ser string o null)
         $point_id = WP_Mapes_Database::insert_point(array(
             'title' => $title,
+            'codi' => $codi !== null ? (string) $codi : null,
             'description' => $description,
             'lat' => $lat,
             'lng' => $lng,
@@ -176,6 +178,7 @@ class WP_Mapes_Ajax
 
         $id = intval($_POST['id'] ?? 0);
         $title = sanitize_text_field(stripslashes($_POST['title'] ?? ''));
+        $codi = sanitize_text_field($_POST['codi'] ?? '');
         $description = sanitize_textarea_field(stripslashes($_POST['description'] ?? ''));
         $lat = floatval($_POST['lat'] ?? 0);
         $lng = floatval($_POST['lng'] ?? 0);
@@ -244,6 +247,7 @@ class WP_Mapes_Ajax
 
         $result = WP_Mapes_Database::update_point($id, array(
             'title' => $title,
+            'codi' => $codi,
             'description' => $description,
             'lat' => $lat,
             'lng' => $lng,

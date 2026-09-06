@@ -55,6 +55,7 @@ class WP_Mapes_Database
         $points_sql = "CREATE TABLE $points_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             title varchar(255) NOT NULL,
+            codi varchar(50) DEFAULT NULL,
             description text,
             lat decimal(10, 6) NOT NULL,
             lng decimal(10, 6) NOT NULL,
@@ -426,10 +427,10 @@ class WP_Mapes_Database
             $table,
             array(
                 'title' => sanitize_text_field($data['title']),
+                'codi' => isset($data['codi']) ? sanitize_text_field($data['codi']) : null,
                 'description' => sanitize_textarea_field($data['description'] ?? ''),
                 'lat' => floatval($data['lat']),
                 'lng' => floatval($data['lng']),
-                // ⭐ CORREGIR AQUESTS CAMPS PER USAR LES DADES DEL FORMULARI
                 'dme' => isset($data['dme']) ? sanitize_text_field($data['dme']) : null,
                 'poblacio' => sanitize_text_field($data['poblacio'] ?? 'No especificada'),
                 'provincia' => sanitize_text_field($data['provincia'] ?? 'Barcelona'),
@@ -438,7 +439,7 @@ class WP_Mapes_Database
                 'darrera_activacio' => $data['darrera_activacio'] ?? null,
                 'indicatiu_activacio' => sanitize_text_field($data['indicatiu_activacio'] ?? '')
             ),
-            array('%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
+            array('%s', '%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
         );
 
         if ($result === false) {
@@ -464,6 +465,7 @@ class WP_Mapes_Database
             $table,
             array(
                 'title' => sanitize_text_field($data['title']),
+                'codi' => isset($data['codi']) ? sanitize_text_field($data['codi']) : null,
                 'description' => sanitize_textarea_field($data['description'] ?? ''),
                 'lat' => floatval($data['lat']),
                 'lng' => floatval($data['lng']),
@@ -476,7 +478,7 @@ class WP_Mapes_Database
                 'indicatiu_activacio' => sanitize_text_field($data['indicatiu_activacio'])
             ),
             array('id' => $id),
-            array('%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s'),
+            array('%s', '%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%d', '%s', '%s'),
             array('%d')
         );
 
