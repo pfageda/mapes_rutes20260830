@@ -219,7 +219,8 @@ class WP_Mapes_Rutes_Core
             $wpdb->prefix . 'mapes_route_points',
             $wpdb->prefix . 'mapes_activitats',
             $wpdb->prefix . 'mapes_activitat_points',
-            $wpdb->prefix . 'mapes_activitat_documents'
+            $wpdb->prefix . 'mapes_activitat_documents',
+            $wpdb->prefix . 'mapes_dme_map'
         ];
 
         $all_exist = true;
@@ -251,8 +252,8 @@ class WP_Mapes_Rutes_Core
         description text,
         lat decimal(10,6) NOT NULL,
         lng decimal(10,6) NOT NULL,
-        DME int(11) DEFAULT NULL,
-        Poblacio varchar(280) NOT NULL,
+        dme varchar(5) DEFAULT NULL,
+        poblacio varchar(280) NOT NULL,
         provincia varchar(140) NOT NULL,
         fitxa_monument varchar(500) NOT NULL,
         vegades_activat int(11) NOT NULL DEFAULT 0,

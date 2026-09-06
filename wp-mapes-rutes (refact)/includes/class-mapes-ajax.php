@@ -79,6 +79,7 @@ class WP_Mapes_Ajax
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
         $provincia = sanitize_text_field($_POST['provincia'] ?? '');
+        $dme = sanitize_text_field($_POST['dme'] ?? null);
 
         error_log("POST REBUT: " . print_r($_POST, true));
 
@@ -101,7 +102,8 @@ class WP_Mapes_Ajax
             'lat' => $lat,
             'lng' => $lng,
             'poblacio' => $poblacio,
-            'provincia' => $provincia
+            'provincia' => $provincia,
+            'dme' => $dme !== null ? (string) $dme : null
         ));
 
         if ($point_id) {
@@ -134,14 +136,29 @@ class WP_Mapes_Ajax
         error_log("ID: $id, Title: $title");
         error_log("Coordenades rebudes: LAT=$lat, LNG=$lng");
 
-        $dme_raw = $_POST['dme'] ?? '';
-        $dme = 0;
+        $dme_raw = $_POST['dme'] ?? null;
+        $dme = null;
+
         if (trim($dme_raw) !== '') {
-            $dme = intval($dme_raw);
-            if ($dme < 0) {
-                wp_send_json_error('El DME ha de ser positiu si s\'indica');
+            // Netejar: conservar només dígits
+            $dme_digits = preg_replace('/\D+/', '', (string) $dme_raw);
+
+            if ($dme_digits === '') {
+                wp_send_json_error('El camp DME ha de contenir dígits vàlids');
                 return;
             }
+
+            // Si la teva columna és VARCHAR(5), normalitzem a 5 caràcters fent LPAD
+            if (strlen($dme_digits) > 5) {
+                // Si vols permetre més de 5, canvia la lògica; per ara rebutgem
+                wp_send_json_error('El DME té massa dígits (màxim 5)');
+                return;
+            }
+
+            // Pad amb zeros a l'esquerra per garantir format "08019"
+            $dme = str_pad($dme_digits, 5, '0', STR_PAD_LEFT);
+        } else {
+            $dme = null; // no proporcionat
         }
 
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
@@ -376,13 +393,13 @@ class WP_Mapes_Ajax
             if ($conflicte) {
                 // Obtenir nom del monument per al missatge
                 $monument = $wpdb->get_row($wpdb->prepare("
-                SELECT title, Poblacio 
+                SELECT title, poblacio 
                 FROM {$wpdb->prefix}mapes_points 
                 WHERE id = %d
             ", $selected_monument));
 
                 $monument_nom = $monument ?
-                    $monument->title . ' (' . $monument->Poblacio . ')' :
+                    $monument->title . ' (' . $monument->poblacio . ')' :
                     'Monument seleccionat';
 
                 wp_send_json_error("❌ El monument '{$monument_nom}' ja està ocupat per l'activació '{$conflicte->indicatiu}' el dia {$data_activitat} a l'horari '{$horari}'. Si us plau, seleccioneu una altra data o horari.");
@@ -476,7 +493,7 @@ class WP_Mapes_Ajax
         global $wpdb;
 
         $conflicte = $wpdb->get_row($wpdb->prepare("
-        SELECT a.id, a.indicatiu, p.title, p.Poblacio
+        SELECT a.id, a.indicatiu, p.title, p.poblacio
         FROM {$wpdb->prefix}mapes_activitats a
         INNER JOIN {$wpdb->prefix}mapes_activitat_points ap ON a.id = ap.activitat_id
         INNER JOIN {$wpdb->prefix}mapes_points p ON ap.point_id = p.id
@@ -489,8 +506,8 @@ class WP_Mapes_Ajax
 
         if ($conflicte) {
             $monument_nom = $conflicte->title;
-            if ($conflicte->Poblacio) {
-                $monument_nom .= ' (' . $conflicte->Poblacio . ')';
+            if ($conflicte->poblacio) {
+                $monument_nom .= ' (' . $conflicte->poblacio . ')';
             }
 
             wp_send_json_error("Monument '{$monument_nom}' ja ocupat el {$data} ({$horari}) per l'activació '{$conflicte->indicatiu}'");

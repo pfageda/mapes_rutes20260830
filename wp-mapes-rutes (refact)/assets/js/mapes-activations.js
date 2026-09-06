@@ -242,9 +242,9 @@ class MapesActivations {
                             ${
                               data.stats
                                 ? `${parseFloat(
-                                    data.stats.weight_obtained || 0
+                                    data.stats.weight_obtained || 0,
                                   ).toFixed(1)}/${parseFloat(
-                                    data.stats.total_route_weight || 0
+                                    data.stats.total_route_weight || 0,
                                   ).toFixed(1)} % pes`
                                 : ""
                             }
@@ -290,7 +290,7 @@ class MapesActivations {
                                         font-size: 11px !important; 
                                         font-weight: bold !important;
                                     ">${parseFloat(point.weight).toFixed(
-                                      1
+                                      1,
                                     )} % pes</span>
                                 `
                                     : ""
@@ -335,13 +335,13 @@ class MapesActivations {
                                     padding: 2px 6px !important; 
                                     border-radius: 4px !important;
                                 ">⏰ ${new Date(
-                                  point.activation_date || point.created_at
+                                  point.activation_date || point.created_at,
                                 ).toLocaleDateString("ca-ES")} ${new Date(
-                          point.activation_date || point.created_at
-                        ).toLocaleTimeString("ca-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}</span>
+                                  point.activation_date || point.created_at,
+                                ).toLocaleTimeString("ca-ES", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}</span>
                             </div>
                             
                             ${
@@ -356,13 +356,13 @@ class MapesActivations {
                                     padding: 4px 6px !important; 
                                     border-radius: 3px !important;
                                 ">📍 ${parseFloat(point.lat).toFixed(
-                                  6
+                                  6,
                                 )}, ${parseFloat(point.lng).toFixed(6)}</div>
                             `
                                 : ""
                             }
                         </div>
-                    `
+                    `,
                       )
                       .join("")}
                 </div>
@@ -425,7 +425,7 @@ class MapesActivations {
                         " onmouseover="this.style.backgroundColor='#dee2e6'" onmouseout="this.style.backgroundColor='#e9ecef'">
                             ${doc.type === "pdf" ? "📄" : "🖼️"} ${doc.file_name}
                         </a>
-                    `
+                    `,
                       )
                       .join("")}
                 </div>
@@ -486,8 +486,8 @@ class MapesActivations {
                     <span><a href="mailto:${
                       data.email
                     }" style="color: #1e81b0 !important;">${
-      data.email || "N/A"
-    }</a></span>
+                      data.email || "N/A"
+                    }</a></span>
                 </div>
                 
                 <div style="display: flex !important; justify-content: space-between !important; padding: 10px 0 !important; border-bottom: 1px solid #e0e0e0 !important;">
@@ -542,7 +542,7 @@ class MapesActivations {
 
     // Mostrar indicador de càrrega
     const confirmBtn = document.querySelector(
-      `button[onclick="confirmActivation(${activationId})"]`
+      `button[onclick="confirmActivation(${activationId})"]`,
     );
     if (confirmBtn) {
       const originalText = confirmBtn.innerHTML;
@@ -567,7 +567,7 @@ class MapesActivations {
           } else {
             alert(
               "❌ Error confirmant l'activació: " +
-                (response.data || "Error desconegut")
+                (response.data || "Error desconegut"),
             );
             restoreBtn();
           }
@@ -592,7 +592,7 @@ class MapesActivations {
 
     // Mostrar indicador de càrrega
     const rejectBtn = document.querySelector(
-      `button[onclick="rejectActivation(${activationId})"]`
+      `button[onclick="rejectActivation(${activationId})"]`,
     );
     if (rejectBtn) {
       const originalText = rejectBtn.innerHTML;
@@ -620,7 +620,7 @@ class MapesActivations {
           } else {
             alert(
               "❌ Error rebutjant l'activació: " +
-                (response.data || "Error desconegut")
+                (response.data || "Error desconegut"),
             );
             restoreBtn();
           }
@@ -638,7 +638,7 @@ class MapesActivations {
 
     if (
       !confirm(
-        "Estàs segur que vols esborrar aquesta activació? Aquesta acció no es pot desfer."
+        "Estàs segur que vols esborrar aquesta activació? Aquesta acció no es pot desfer.",
       )
     ) {
       return;
@@ -646,7 +646,7 @@ class MapesActivations {
 
     // Mostrar indicador de càrrega
     const deleteBtn = document.querySelector(
-      `button[onclick="deleteActivation(${activationId})"]`
+      `button[onclick="deleteActivation(${activationId})"]`,
     );
     if (deleteBtn) {
       const originalText = deleteBtn.innerHTML;
@@ -671,7 +671,7 @@ class MapesActivations {
           } else {
             alert(
               "❌ Error esborrant l'activació: " +
-                (response.data || "Error desconegut")
+                (response.data || "Error desconegut"),
             );
             restoreBtn();
           }
@@ -687,7 +687,8 @@ class MapesActivations {
   editActivation(activationId) {
     console.log("✏️ Editant activació:", activationId);
     alert(
-      "⚠️ Funció d'editar activació encara no implementada. ID: " + activationId
+      "⚠️ Funció d'editar activació encara no implementada. ID: " +
+        activationId,
     );
   }
 

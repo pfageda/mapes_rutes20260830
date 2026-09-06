@@ -35,8 +35,6 @@
 
                 <!-- MODE UBICACIÓ PER NOM -->
                 <div class="mapes-form-group" id="location-input-<?php echo $app_id; ?>">
-                    <label>Ubicació *</label>
-                    <input type="text" name="location_name" placeholder="ex: Sagrada Familia Barcelona">
 
                     <!-- ⭐ NOUS CAMPS - NOMÉS PER UBICACIÓ PER NOM -->
                     <div style="margin-top: 15px;">
@@ -72,6 +70,13 @@
                         </div>
                     </div>
                     <!-- NO hi ha camps poblacio/provincia aquí -->
+                    <!-- PREVIEW AUTOMÀTIC PER COORDENADES -->
+                    <div id="coords-preview-<?php echo $app_id; ?>" class="mapes-coords-preview"
+                        style="display:none; margin-top:12px; padding:8px; border-radius:6px; background:#f7f7f7; border:1px solid #e0e0e0;">
+                        <div style="margin-bottom:6px;"><strong>Població:</strong> <span
+                                class="preview-poblacio">—</span></div>
+                        <div><strong>Província:</strong> <span class="preview-provincia">—</span></div>
+                    </div>
                 </div>
 
                 <!-- BOTONS D'ACCIÓ -->

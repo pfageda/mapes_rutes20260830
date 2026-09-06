@@ -388,23 +388,24 @@ class MapesUser {
         pointsContainer.innerHTML = route.points
           .map((rp, index) => {
             const point = this.points.find((p) => p.id == rp.point_id);
+            const esc = (s) =>
+              ("" + (s || "")).replace(/'/g, "\\'").replace(/\n/g, " ");
+            const titleEsc = esc(point.title);
+            const formattedEsc = esc(
+              point.formatted_address || point.location_name || "",
+            );
+            const poblacioEsc = esc(point.Poblacio || point.poblacio || "");
+            const provinciaEsc = esc(point.provincia || "");
             if (!point) return "";
 
             return `
-      <div class="route-point-item" onclick="openPointInGoogleMaps('${
-        point.title
-      }', '${point.Poblacio}')">
-        <div class="route-point-name">${index + 1}. ${point.title}</div>
-        <div class="route-point-coords">
-          ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lng).toFixed(
-            4,
-          )}
-        </div>
-       <div class="route-point-weight">Pes: ${parseFloat(
-         rp.weight || 1,
-       ).toFixed(2)}</div>
-
-      </div>
+    <div class="route-point-item" onclick="openPointInGoogleMaps('${titleEsc}','${formattedEsc}','${poblacioEsc}','${provinciaEsc}', ${parseFloat(point.lat)}, ${parseFloat(point.lng)})">
+    <div class="route-point-name">${index + 1}. ${point.title}</div>
+    <div class="route-point-coords">
+      ${parseFloat(point.lat).toFixed(4)}, ${parseFloat(point.lng).toFixed(4)}
+    </div>
+    <div class="route-point-weight">Pes: ${parseFloat(rp.weight || 1).toFixed(2)}</div>
+  </div>
     `;
           })
           .join("");
@@ -533,26 +534,21 @@ class MapesUser {
       });
 
       marker.addListener("click", () => {
-        // Crear cerca textual del monument + ubicació
-        const poblacio = point.Poblacio || "";
-        if (
-          !poblacio ||
-          poblacio.trim() === "" ||
-          poblacio.trim().toLowerCase() === "no especificada"
-        ) {
-          // MOSTRAR ALERTA SI NO HI HA POBLACIÓ VÀLIDA
-          alert(
-            `${point.title}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`,
-          );
-          return;
-        }
-        const searchQuery = `${point.title} ${poblacio || ""}`.trim();
-        const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-          searchQuery,
-        )}?hl=ca&gl=ES`;
+        const title = point.title || "";
+        const formatted = point.formatted_address || point.location_name || "";
+        const poblacio = point.Poblacio || point.poblacio || "";
+        const provincia = point.provincia || "";
+        const lat = parseFloat(point.lat);
+        const lng = parseFloat(point.lng);
 
-        // Obrir en nova pestanya
-        window.open(googleMapsUrl, "_blank");
+        window.openPointInGoogleMaps(
+          title,
+          formatted,
+          poblacio,
+          provincia,
+          lat,
+          lng,
+        );
       });
       this.markers.push(marker);
     });
@@ -712,7 +708,7 @@ class MapesUser {
       this.filteredPoints = this.allPoints.filter(
         (point) =>
           point.title.toLowerCase().includes(term) ||
-          (point.Poblacio && point.Poblacio.toLowerCase().includes(term)) ||
+          (point.poblacio && point.poblacio.toLowerCase().includes(term)) ||
           (point.description && point.description.toLowerCase().includes(term)),
       );
     }
@@ -743,7 +739,7 @@ class MapesUser {
    */
   createPointItemHTML(point) {
     const statusColor = this.getPointActivationColor(point);
-    const location = point.Poblacio ? ` (${point.Poblacio})` : "";
+    const location = point.poblacio ? ` (${point.poblacio})` : "";
 
     return `
     <div class="point-item-user" onclick="window.mapesUser.selectPoint(${
@@ -813,7 +809,21 @@ class MapesUser {
 
     // Afegir event click per obrir Google Maps
     marker.addListener("click", () => {
-      window.openPointInGoogleMaps(point.title, point.Poblacio);
+      const title = point.title || "";
+      const formatted = point.formatted_address || point.location_name || "";
+      const poblacio = point.Poblacio || point.poblacio || "";
+      const provincia = point.provincia || "";
+      const lat = parseFloat(point.lat);
+      const lng = parseFloat(point.lng);
+
+      window.openPointInGoogleMaps(
+        title,
+        formatted,
+        poblacio,
+        provincia,
+        lat,
+        lng,
+      );
     });
 
     // Guardar marker
@@ -936,11 +946,11 @@ class MapesUser {
     </div>
     
     ${
-      point.Poblacio
+      point.poblacio
         ? `
     <div class="point-detail-item">
       <strong class="point-detail-label">Població:</strong>
-      <span class="point-detail-value">${this.escapeHtml(point.Poblacio)}</span>
+      <span class="point-detail-value">${this.escapeHtml(point.poblacio)}</span>
     </div>
     `
         : ""
@@ -1044,12 +1054,12 @@ class MapesUser {
       </div>
       
       ${
-        point.Poblacio
+        point.poblacio
           ? `
       <div class="point-detail-item">
         <span class="point-detail-label">Població:</span>
         <span class="point-detail-value">${this.escapeHtml(
-          point.Poblacio,
+          point.poblacio,
         )}</span>
       </div>
       `
@@ -1279,29 +1289,269 @@ window.finalitzarActivitat = function (appId) {
 };
 
 // Funció per obrir monument a Google Maps (reutilitzant lògica dels markers)
-window.openPointInGoogleMaps = function (pointTitle, pointPoblacio) {
-  console.log(`Obrint Google Maps per: ${pointTitle}`);
-
-  // Validar població (igual que fa als markers)
-  if (
-    !pointPoblacio ||
-    pointPoblacio.trim() === "" ||
-    pointPoblacio.trim().toLowerCase() === "no especificada"
-  ) {
-    alert(
-      `${pointTitle}\n\nNo es pot obrir a Google Maps perquè la població no està especificada. Contacta amb l'administrador per completar aquesta informació.`,
+// Nova versió: primer prova per nom; si no troba resultats -> fallback per coordenades
+// Nova versió: prova formatted_address → (title + poblacio + provincia) → coords
+// openPointInGoogleMaps: prova formatted_address -> (title + poblacio + provincia [+ país]) -> coords
+window.openPointInGoogleMaps = function (
+  pointTitle,
+  pointFormattedAddress,
+  pointPoblacio,
+  pointProvincia,
+  pointLat,
+  pointLng,
+) {
+  // Helpers locals
+  const safeContains = (haystack, needle) => {
+    if (!haystack || !needle) return false;
+    return (
+      String(haystack).toLowerCase().indexOf(String(needle).toLowerCase()) !==
+      -1
     );
+  };
+
+  const getAddressComponentLong = (result, types) => {
+    if (!result || !result.address_components) return "";
+    for (const t of types) {
+      const comp = result.address_components.find(
+        (c) => Array.isArray(c.types) && c.types.indexOf(t) !== -1,
+      );
+      if (comp && comp.long_name) return comp.long_name;
+    }
+    return "";
+  };
+
+  // Normalitzar inputs
+  const title = (pointTitle || "").trim();
+  const formatted = (pointFormattedAddress || "").trim();
+  const poblacio = (pointPoblacio || "").trim();
+  const provincia = (pointProvincia || "").trim();
+  const lat = isFinite(pointLat) ? parseFloat(pointLat) : NaN;
+  const lng = isFinite(pointLng) ? parseFloat(pointLng) : NaN;
+
+  // Validació bàsica
+  if (!title && (isNaN(lat) || isNaN(lng)) && !formatted) {
+    alert("No hi ha dades suficients per obrir aquest punt a Google Maps.");
     return;
   }
 
-  // Reutilitzar la mateixa lògica dels markers
-  const searchQuery = `${pointTitle} ${pointPoblacio}`.trim();
-  const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(
-    searchQuery,
-  )}?hl=ca&gl=ES`;
+  // Calcular un hint de país per desambiguar (millora per Catalunya/EUA/Japó)
+  let countryHint = "";
+  const provLower = (provincia || "").toLowerCase();
+  if (
+    [
+      "barcelona",
+      "girona",
+      "lleida",
+      "tarragona",
+      "catalunya",
+      "catalonia",
+    ].includes(provLower)
+  ) {
+    countryHint = "Spain";
+  } else if (
+    provLower.includes("new york") ||
+    provLower.includes("usa") ||
+    provLower.includes("united states")
+  ) {
+    countryHint = "USA";
+  } else if (provLower.includes("tokyo") || provLower.includes("japan")) {
+    countryHint = "Japan";
+  }
 
-  // Obrir en nova pestanya
-  window.open(googleMapsUrl, "_blank");
+  // Construir candidats locals (nom únic per evitar conflictes globals)
+  const geocodeCandidates = [];
+  if (formatted) geocodeCandidates.push(formatted);
+
+  if (title) {
+    // Prioritat: title + poblacio + provincia + país (si és possible)
+    let titleWithPlace = title;
+    if (poblacio) titleWithPlace += ", " + poblacio;
+    if (provincia) titleWithPlace += ", " + provincia;
+    if (countryHint) titleWithPlace += ", " + countryHint;
+    geocodeCandidates.push(titleWithPlace);
+
+    // Variants addicionals (més àmplies -> més estretes)
+    if (poblacio && countryHint)
+      geocodeCandidates.push(`${title}, ${poblacio}, ${countryHint}`);
+    if (poblacio) geocodeCandidates.push(`${title}, ${poblacio}`);
+    if (provincia && countryHint)
+      geocodeCandidates.push(`${title}, ${provincia}, ${countryHint}`);
+    if (provincia) geocodeCandidates.push(`${title}, ${provincia}`);
+
+    // Últim recurs textual: el título sol
+    geocodeCandidates.push(title);
+  }
+
+  // Debug: mostra què provarà (pots eliminar aquests console.logs després)
+  console.log("openPointInGoogleMaps inputs:", {
+    title,
+    formatted,
+    poblacio,
+    provincia,
+    lat,
+    lng,
+  });
+  console.log("Geocode candidates (local):", geocodeCandidates);
+
+  // Funció per obrir per coordenades (fallback)
+  const openCoordsUrl = () => {
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + "," + lng)}`;
+      window.open(url, "_blank");
+      if (window.mapesUI && window.mapesUI.showAlert) {
+        window.mapesUI.showAlert(
+          "S'ha obert el punt per coordenades (fallback).",
+        );
+      }
+    } else if (title) {
+      // Només obrir el title com a últim recurs textual
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(title)}?hl=ca&gl=ES`;
+      window.open(url, "_blank");
+    } else {
+      alert("No s'ha pogut localitzar el punt.");
+    }
+  };
+
+  // Si tenim l'API de Google Maps carregada, provar geocoder seqüencialment
+  if (typeof google !== "undefined" && google.maps && google.maps.Geocoder) {
+    const geocoder = new google.maps.Geocoder();
+    let i = 0;
+
+    const tryNext = () => {
+      if (i >= geocodeCandidates.length) {
+        // Cap candidat vàlid → fallback coordenades
+        openCoordsUrl();
+        return;
+      }
+
+      const q = geocodeCandidates[i++];
+      console.log("Geocode try:", q);
+
+      // Prova amb geocoder
+      // Prova amb geocoder
+      geocoder.geocode({ address: q }, (results, status) => {
+        console.log(
+          "Geocode response for:",
+          q,
+          status,
+          results && results.length,
+        );
+        if (status === "OK" && results && results.length > 0) {
+          const r = results[0];
+          const formatted_addr = r.formatted_address || "";
+          const placeId = r.place_id || "";
+          console.log("formatted_address:", formatted_addr);
+          console.log("place_id:", placeId);
+          console.log("address_components:", r.address_components);
+
+          // NOVA LÍNIA IMPORTANT: si hi ha place_id, obre la fitxa del POI i surt
+          if (placeId) {
+            const url = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+            window.open(url, "_blank");
+            console.log("Obert per place_id:", placeId, "->", url);
+            return;
+          }
+
+          // Helper: obrir la millor URL per al resultat (preferir place_id -> fitxa del POI)
+          const openResult = () => {
+            if (placeId) {
+              // Obre la fitxa del lloc (nom, fotos, reseñes)
+              const url = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+              window.open(url, "_blank");
+            } else {
+              // Si no hi ha place_id: preferim obrir la cerca amb la consulta original 'q'
+              // perquè el formatted_address sovint és només la direcció del carrer
+              const addrForUrl =
+                formatted_addr &&
+                q &&
+                formatted_addr.toLowerCase().includes((q || "").toLowerCase())
+                  ? formatted_addr
+                  : q || formatted_addr;
+              const url = `https://www.google.com/maps/search/${encodeURIComponent(addrForUrl)}?hl=ca&gl=ES`;
+              window.open(url, "_blank");
+            }
+          };
+
+          // 1) Si l'usuari va proporcionar formatted_address, acceptar si està contingut al result
+          if (formatted && safeContains(formatted_addr, formatted)) {
+            openResult();
+            return;
+          }
+
+          // 2) Comprovacions toletes acceptables:
+          // - Comprovar si el nom està present (substring o en algun component)
+          const namePresent =
+            (title && safeContains(formatted_addr, title)) ||
+            (title &&
+              r.address_components &&
+              r.address_components.some((c) =>
+                safeContains(c.long_name || "", title),
+              ));
+
+          // - Extreure components per població i província
+          const poblacioComp = getAddressComponentLong(r, [
+            "locality",
+            "postal_town",
+            "administrative_area_level_3",
+            "neighborhood",
+          ]);
+          const provinciaComp = getAddressComponentLong(r, [
+            "administrative_area_level_2",
+            "administrative_area_level_1",
+          ]);
+
+          const poblacioMatch = poblacio
+            ? safeContains(poblacioComp || formatted_addr, poblacio) ||
+              safeContains(formatted_addr, poblacio)
+            : true;
+          const provinciaMatch = provincia
+            ? safeContains(provinciaComp || formatted_addr, provincia) ||
+              safeContains(formatted_addr, provincia)
+            : true;
+
+          // Acceptar si el nom està present i (poblacio/provincia coincideixen si s'han subministrat)
+          if (namePresent && poblacioMatch && provinciaMatch) {
+            openResult();
+            return;
+          }
+
+          // Cass especials: el geocoder pot retornar un nom diferent (ex: "Plaça de Santa Maria,...")
+          // Acceptar també si la població/província apareixen al formatted_address i algun component conté parcialment el title
+          if (
+            (poblacio && safeContains(formatted_addr, poblacio)) ||
+            (provincia && safeContains(formatted_addr, provincia))
+          ) {
+            if (
+              title &&
+              r.address_components &&
+              r.address_components.some((c) =>
+                safeContains(c.long_name || "", title),
+              )
+            ) {
+              openResult();
+              return;
+            }
+          }
+
+          // Si no acceptem aquest resultat, provar següent candidat
+          tryNext();
+        } else {
+          // Error o no resultats → provar següent candidat
+          tryNext();
+        }
+      });
+    };
+
+    tryNext();
+  } else {
+    // Si no hi ha l'API JS disponible: obrir la millor opció textual disponible o coords
+    if (geocodeCandidates.length && geocodeCandidates[0]) {
+      const url = `https://www.google.com/maps/search/${encodeURIComponent(geocodeCandidates[0])}?hl=ca&gl=ES`;
+      window.open(url, "_blank");
+    } else {
+      openCoordsUrl();
+    }
+  }
 };
 window.getPointActivationColor = function (point) {
   return window.mapesUser.getPointActivationColor(point);
