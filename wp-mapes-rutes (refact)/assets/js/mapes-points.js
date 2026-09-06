@@ -68,6 +68,7 @@ class MapesPoints {
     const data = {
       id: pointId,
       title: point.title || "",
+      codi: point.codi || "",
       description: point.description || "",
       lat: parseFloat(lat),
       lng: parseFloat(lng),
@@ -375,6 +376,7 @@ class MapesPoints {
     const pointData = {
       id: pointId,
       title: data.title.trim(),
+      codi: data.codi ? data.codi.trim() : "",
       description: data.description ? data.description.trim() : "",
       lat: parseFloat(data.lat),
       lng: parseFloat(data.lng),
