@@ -79,7 +79,7 @@ class WP_Mapes_Ajax
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
         $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
         $provincia = sanitize_text_field($_POST['provincia'] ?? '');
-        $dme = sanitize_text_field($_POST['dme'] ?? null);
+        $dme = isset($_POST['dme']) ? sanitize_text_field($_POST['dme']) : null;
 
         error_log("POST REBUT: " . print_r($_POST, true));
 
@@ -95,7 +95,56 @@ class WP_Mapes_Ajax
             return;
         }
 
-        // ⭐ CRIDAR insert_point AMB TOTS ELS CAMPS
+        // Normalitzar DME si s'ha enviat (només dígits, pad a 5). Si queda buit => null.
+        if ($dme !== null && trim($dme) !== '') {
+            $dme_digits = preg_replace('/\D+/', '', (string) $dme);
+            if ($dme_digits === '') {
+                $dme = null;
+            } else {
+                $dme_digits = substr($dme_digits, -5);
+                $dme = str_pad($dme_digits, 5, '0', STR_PAD_LEFT);
+            }
+        } else {
+            $dme = null;
+        }
+
+        // Si no hi ha DME, intentar cercar automàticament a la taula de mapping (mapes_dme_map)
+        if ($dme === null) {
+            $dme_table = $wpdb->prefix . 'mapes_dme_map';
+
+            // comprovar que la taula existeix
+            $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $dme_table));
+            if ($exists == $dme_table) {
+                // Buscar coincidència exacta (província + població), comparant en minúscules i trim
+                if (!empty($provincia) && !empty($poblacio)) {
+                    $prov_l = strtolower(trim($provincia));
+                    $pob_l = strtolower(trim($poblacio));
+                    $sql = "SELECT campdme FROM $dme_table WHERE LOWER(TRIM(provincia)) = %s AND LOWER(TRIM(poblacio)) = %s LIMIT 1";
+                    $found = $wpdb->get_var($wpdb->prepare($sql, $prov_l, $pob_l));
+                    if ($found) {
+                        $found_digits = preg_replace('/\D+/', '', $found);
+                        $dme = str_pad(substr($found_digits, -5), 5, '0', STR_PAD_LEFT);
+                        error_log("AUTO DME ASSIGNAT (prov+pob): $dme for {$poblacio}, {$provincia}");
+                    }
+                }
+
+                // Si no trobat, intentar només per població
+                if ($dme === null && !empty($poblacio)) {
+                    $pob_l = strtolower(trim($poblacio));
+                    $sql2 = "SELECT campdme FROM $dme_table WHERE LOWER(TRIM(poblacio)) = %s LIMIT 1";
+                    $found2 = $wpdb->get_var($wpdb->prepare($sql2, $pob_l));
+                    if ($found2) {
+                        $found_digits = preg_replace('/\D+/', '', $found2);
+                        $dme = str_pad(substr($found_digits, -5), 5, '0', STR_PAD_LEFT);
+                        error_log("AUTO DME ASSIGNAT (pob): $dme for {$poblacio}");
+                    }
+                }
+            } else {
+                error_log("AUTO DME: taula $dme_table no existeix, no s'ha intentat el match");
+            }
+        }
+
+        // ⭐ CRIDAR insert_point AMB TOTS ELS CAMPS (dme pot ser string o null)
         $point_id = WP_Mapes_Database::insert_point(array(
             'title' => $title,
             'description' => $description,
@@ -115,7 +164,6 @@ class WP_Mapes_Ajax
             wp_send_json_error('Error afegint monument a la base de dades');
         }
     }
-
 
 
     public function edit_point()
