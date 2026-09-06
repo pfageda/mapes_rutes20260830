@@ -196,6 +196,31 @@ class WP_Mapes_Database
         } else {
             error_log('TAULA DME_MAP JA EXISTEIX');
         }
+        // If the table was just created, try importing a CSV placed in plugin/dades/dme.csv
+        $csv_path = dirname(__DIR__) . '/dades/dme.csv';
+        if (file_exists($csv_path) && is_readable($csv_path)) {
+            $count = intval($wpdb->get_var("SELECT COUNT(*) FROM $dme_table"));
+            if ($count === 0) {
+                error_log('Important DME des de: ' . $csv_path);
+                self::import_dme_csv($dme_table, $csv_path);
+            } else {
+                error_log("DME_MAP ja conté $count files; no s'importa CSV");
+            }
+        } else {
+            error_log('CSV DME no trobat o no llegible a ' . $csv_path . '; saltant import.');
+        }
+
+        // If table exists but empty, optionally import as well
+        if ($table_exists == $dme_table) {
+            $csv_path = dirname(__DIR__) . '/dades/dme.csv';
+            if (file_exists($csv_path) && is_readable($csv_path)) {
+                $count = intval($wpdb->get_var("SELECT COUNT(*) FROM $dme_table"));
+                if ($count === 0) {
+                    error_log('Taula DME_MAP existent però buida — important DME des de: ' . $csv_path);
+                    self::import_dme_csv($dme_table, $csv_path);
+                }
+            }
+        }
 
 
         // La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
@@ -217,7 +242,7 @@ class WP_Mapes_Database
             uploaded_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY activitat_id (activitat_id)
-        ) $charset_collate";
+            ) $charset_collate";
 
             $result = $wpdb->query($documents_sql);
             if ($result === false) {
@@ -232,6 +257,81 @@ class WP_Mapes_Database
         // ⭐ MIGRACIÓ DE DADES (si cal)
         self::migrate_activitats_to_activacions();
         self::$tables_created = true;
+    }
+
+    /**
+     * Importar CSV de DME a la taula $dme_table.
+     * CSV esperat: DXCC, PROVINCE CODE, PROVINCE NAME, dme NUMBER, dme NAME
+     */
+    private static function import_dme_csv($dme_table, $csv_path)
+    {
+        global $wpdb;
+        $handle = @fopen($csv_path, 'r');
+        if (!$handle) {
+            error_log('import_dme_csv: no s\'ha pogut obrir: ' . $csv_path);
+            return false;
+        }
+
+        // llegir header
+        $header = fgetcsv($handle);
+        $inserted = 0;
+        $updated = 0;
+        $skipped = 0;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 5) {
+                $skipped++;
+                continue;
+            }
+            $prov_name = sanitize_text_field(trim($row[2] ?? ''));
+            $dme_number_raw = trim($row[3] ?? '');
+            $dme_name = sanitize_text_field(trim($row[4] ?? ''));
+
+            // Normalitzar campdme: només dígits, prendre últims 5 i pad a 5
+            $dme_digits = preg_replace('/\D+/', '', $dme_number_raw);
+            if ($dme_digits === '') {
+                $skipped++;
+                continue;
+            }
+            $dme_digits = substr($dme_digits, -5);
+            $campdme = str_pad($dme_digits, 5, '0', STR_PAD_LEFT);
+
+            // Upsert per (provincia, poblacio) amb campdme
+            $exists_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $dme_table WHERE provincia = %s AND poblacio = %s LIMIT 1",
+                $prov_name,
+                $dme_name
+            ));
+
+            $data = array(
+                'provincia' => $prov_name,
+                'poblacio' => $dme_name,
+                'campdme' => $campdme,
+                'created_at' => current_time('mysql')
+            );
+            $formats = array('%s', '%s', '%s', '%s');
+
+            if ($exists_id) {
+                $res = $wpdb->update($dme_table, $data, array('id' => $exists_id), $formats, array('%d'));
+                if ($res === false) {
+                    error_log('import_dme_csv: error update: ' . $wpdb->last_error);
+                    $skipped++;
+                } else {
+                    $updated++;
+                }
+            } else {
+                $res = $wpdb->insert($dme_table, $data, $formats);
+                if ($res === false) {
+                    error_log('import_dme_csv: error insert: ' . $wpdb->last_error);
+                    $skipped++;
+                } else {
+                    $inserted++;
+                }
+            }
+        }
+        fclose($handle);
+        error_log("import_dme_csv: Inserits={$inserted}, Actualitzats={$updated}, Saltats={$skipped}");
+        return array('inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped);
     }
 
     // FUNCIÓ MODIFICADA: get_points sense dependencies de routes
