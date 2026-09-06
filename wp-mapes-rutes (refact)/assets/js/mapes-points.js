@@ -163,7 +163,7 @@ class MapesPoints {
     pattern="^[0-9]{1,5}$"
     maxlength="5"
     value="${(point.dme ?? "").toString().replace(/"/g, '"')}"
-    placeholder="08019"
+    placeholder="el codi de 5 xifres"
     class="mapes-input-dme"
     autocomplete="off"
     
