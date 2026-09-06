@@ -320,7 +320,8 @@ class WP_Mapes_Ajax
         ));
 
         if ($route_id) {
-            WP_Mapes_Database::insert_route_points($route_id, $points);
+            // file: includes/class-mapes-ajax.php inside create_route, after $route_id is created
+            WP_Mapes_Database::insert_route_points($route_id, $points, true, 'DMRC', true);
             wp_send_json_success(array(
                 'message' => 'Ruta creada correctament',
                 'route_id' => $route_id
@@ -358,7 +359,7 @@ class WP_Mapes_Ajax
         ));
 
         if ($result !== false) {
-            WP_Mapes_Database::insert_route_points($id, $points);
+            WP_Mapes_Database::insert_route_points($id, $points, true, 'DMRC', true);
             wp_send_json_success('Ruta actualitzada correctament');
         } else {
             wp_send_json_error('Error actualitzant ruta');

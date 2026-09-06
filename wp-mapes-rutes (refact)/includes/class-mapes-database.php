@@ -604,26 +604,60 @@ class WP_Mapes_Database
     }
 
     // OPERACIONS PUNTS DE RUTA
-    public static function insert_route_points($route_id, $points)
+    // file: includes/class-mapes-database.php
+    public static function insert_route_points($route_id, $points, $assign_codes = false, $drmc = 'DMRC', $overwrite = true)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_route_points';
+        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $points_table = $wpdb->prefix . 'mapes_points';
+        $routes_table = $wpdb->prefix . 'mapes_routes';
 
-        // Eliminar monuments existents
-        $wpdb->delete($table, array('route_id' => $route_id), array('%d'));
+        // Eliminar monuments existents per a la ruta
+        $wpdb->delete($route_points_table, array('route_id' => $route_id), array('%d'));
 
-        // Inserir nous monuments
+        // Llegir codi de la ruta si cal assignar
+        $route_code = '';
+        if ($assign_codes) {
+            $route_code = $wpdb->get_var($wpdb->prepare("SELECT code FROM $routes_table WHERE id = %d", $route_id));
+            $route_code = $route_code ? sanitize_text_field($route_code) : '';
+        }
+
         foreach ($points as $point) {
+            $point_id = intval($point['point_id']);
+            $order_num = intval($point['order']);
+            $weight = isset($point['weight']) ? floatval($point['weight']) : 1.0;
+
             $wpdb->insert(
-                $table,
+                $route_points_table,
                 array(
                     'route_id' => $route_id,
-                    'point_id' => intval($point['point_id']),
-                    'order_num' => intval($point['order']),
-                    'weight' => floatval($point['weight'])
+                    'point_id' => $point_id,
+                    'order_num' => $order_num,
+                    'weight' => $weight
                 ),
                 array('%d', '%d', '%d', '%f')
             );
+
+            if ($assign_codes && $route_code !== '' && $point_id) {
+                // ordre en HEX d'un sol caràcter: agafem order_num % 16 i convertim a hex (majúscula)
+                $hex = strtoupper(dechex($order_num % 16)); // 0..F
+                // construir codi sense separadors: DMRC + ROUTE_CODE + HEX
+                $new_code = sanitize_text_field($drmc) . $route_code . $hex;
+
+                if ($overwrite) {
+                    $wpdb->update($points_table, array('codi' => $new_code), array('id' => $point_id), array('%s'), array('%d'));
+                    error_log("Assigned codi {$new_code} to point {$point_id} for route {$route_id}");
+                } else {
+                    // només si està buit o NULL
+                    $current = $wpdb->get_var($wpdb->prepare("SELECT codi FROM $points_table WHERE id = %d LIMIT 1", $point_id));
+                    if ($current === null || $current === '') {
+                        $wpdb->update($points_table, array('codi' => $new_code), array('id' => $point_id), array('%s'), array('%d'));
+                        error_log("Assigned codi {$new_code} to point {$point_id} (was empty) for route {$route_id}");
+                    } else {
+                        error_log("Skipped assigning codi to point {$point_id} because it already has codi='{$current}'");
+                    }
+                }
+            }
         }
 
         return true;
