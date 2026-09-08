@@ -1,7 +1,7 @@
 <?php
 /**
  * Gestió de base de dades per Mapes i Rutes
- */ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ */
 
 if (!defined('ABSPATH')) {
     exit;
