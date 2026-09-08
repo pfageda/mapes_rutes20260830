@@ -710,11 +710,14 @@ class MapesPoints {
             let missatge = "";
 
             if (!matchName && !matchPoblacio) {
-              missatge = "No s'ha pogut verificar tant el nom del lloc com la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.",;
+              missatge =
+                "No s'ha pogut verificar tant el nom del lloc com la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
             } else if (!matchName) {
-              missatge = "No s'ha pogut verificar el nom del lloc amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.",;
+              missatge =
+                "No s'ha pogut verificar el nom del lloc amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
             } else if (!matchPoblacio) {
-              missatge = "No s'ha pogut verificar el nom de la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.",;
+              missatge =
+                "No s'ha pogut verificar el nom de la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
             }
 
             window.mapesUI.showAlert(missatge);
