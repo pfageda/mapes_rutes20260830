@@ -232,7 +232,8 @@ class WP_Mapes_Rutes_Core
             $wpdb->prefix . 'mapes_activitats',
             $wpdb->prefix . 'mapes_activitat_points',
             $wpdb->prefix . 'mapes_activitat_documents',
-            $wpdb->prefix . 'mapes_dme_map'
+            $wpdb->prefix . 'mapes_dme_map',
+            $wpdb->prefix . 'mapes_provincies_municipis',
         ];
 
         $all_exist = true;

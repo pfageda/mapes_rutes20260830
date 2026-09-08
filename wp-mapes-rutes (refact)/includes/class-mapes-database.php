@@ -223,7 +223,108 @@ class WP_Mapes_Database
             }
         }
 
+        // CREAR TAULA DE PROVÍNCIES I MUNICIPIS
+        $municipis_table = $wpdb->prefix . 'mapes_provincies_municipis';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$municipis_table'");
 
+        if ($table_exists != $municipis_table) {
+
+            $municipis_sql = "CREATE TABLE $municipis_table (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        codi_municipi VARCHAR(10) NOT NULL,
+        poblacio VARCHAR(191) NOT NULL,
+        codi_comarca VARCHAR(10) NOT NULL,
+        comarca VARCHAR(191) NOT NULL,
+        codi_ambit VARCHAR(10) NOT NULL,
+        ambit VARCHAR(191) NOT NULL,
+        codi_provincia VARCHAR(10) NOT NULL,
+        provincia VARCHAR(191) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        PRIMARY KEY (id),
+        UNIQUE KEY uk_codi_municipi (codi_municipi),
+        KEY idx_provincia (provincia(100)),
+        KEY idx_poblacio (poblacio(100)),
+        KEY idx_codi_provincia (codi_provincia)
+    ) $charset_collate";
+
+            $result = $wpdb->query($municipis_sql);
+
+            if ($result === false) {
+                error_log(
+                    'ERROR CREANT TAULA PROVINCIES_MUNICIPIS: '
+                    . $wpdb->last_error
+                );
+                error_log('SQL: ' . $municipis_sql);
+            } else {
+                error_log(
+                    'TAULA PROVINCIES_MUNICIPIS CREADA CORRECTAMENT'
+                );
+            }
+
+        } else {
+            error_log(
+                'TAULA PROVINCIES_MUNICIPIS JA EXISTEIX'
+            );
+        }
+
+        // IMPORTAR PROVÍNCIES I MUNICIPIS DES DEL CSV
+        $csv_path = dirname(__DIR__) . '/dades/provincies_municipis.csv';
+
+        if (file_exists($csv_path) && is_readable($csv_path)) {
+
+            $count = intval($wpdb->get_var("SELECT COUNT(*) FROM $municipis_table"));
+
+            if ($count === 0) {
+                error_log('Important províncies i municipis des de: ' . $csv_path);
+
+                self::import_provincies_municipis_csv(
+                    $municipis_table,
+                    $csv_path
+                );
+            } else {
+                error_log(
+                    "PROVINCIES_MUNICIPIS ja conté $count files; no s'importa CSV"
+                );
+            }
+
+        } else {
+
+            error_log(
+                'CSV de províncies i municipis no trobat o no llegible a '
+                . $csv_path
+                . '; saltant import.'
+            );
+        }
+
+
+        // Si la taula ja existia però estava buida,
+// també intentem importar el CSV
+        if ($table_exists == $municipis_table) {
+
+            $csv_path = dirname(__DIR__) . '/dades/provincies_municipis.csv';
+
+            if (file_exists($csv_path) && is_readable($csv_path)) {
+
+                $count = intval(
+                    $wpdb->get_var("SELECT COUNT(*) FROM $municipis_table")
+                );
+
+                if ($count === 0) {
+
+                    error_log(
+                        'Taula PROVINCIES_MUNICIPIS existent però buida — '
+                        . 'important des de: '
+                        . $csv_path
+                    );
+
+                    self::import_provincies_municipis_csv(
+                        $municipis_table,
+                        $csv_path
+                    );
+                }
+            }
+        }
         // La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
         error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'mapes_activacions; la taula està consolidada a mapes_activitats.');
 
@@ -333,6 +434,169 @@ class WP_Mapes_Database
         fclose($handle);
         error_log("import_dme_csv: Inserits={$inserted}, Actualitzats={$updated}, Saltats={$skipped}");
         return array('inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped);
+    }
+
+    /**
+     * Importar CSV d'Idescat a la taula $municipis_table.
+     *
+     * CSV esperat:
+     * Codi municipi, Nom municipi, Codi comarca, Nom comarca,
+     * Codi àmbit, Nom àmbit, Codi província, Nom província
+     *
+     * El CSV comença directament amb les dades, sense capçalera.
+     */
+    private static function import_provincies_municipis_csv($municipis_table, $csv_path)
+    {
+        global $wpdb;
+
+        $handle = @fopen($csv_path, 'r');
+        // Saltar la capçalera del CSV
+        fgetcsv($handle);
+
+        if (!$handle) {
+            error_log(
+                'import_provincies_municipis_csv: no s\'ha pogut obrir: '
+                . $csv_path
+            );
+            return false;
+        }
+
+        $inserted = 0;
+        $updated = 0;
+        $skipped = 0;
+
+        // Llegir totes les files del CSV
+        while (($row = fgetcsv($handle)) !== false) {
+
+            // El CSV ha de tenir com a mínim 8 camps
+            if (count($row) < 8) {
+                $skipped++;
+                continue;
+            }
+
+            // Llegir camps del CSV
+            $codi_municipi = sanitize_text_field(trim($row[0] ?? ''));
+            $poblacio = sanitize_text_field(trim($row[1] ?? ''));
+            $codi_comarca = sanitize_text_field(trim($row[2] ?? ''));
+            $comarca = sanitize_text_field(trim($row[3] ?? ''));
+            $codi_ambit = sanitize_text_field(trim($row[4] ?? ''));
+            $ambit = sanitize_text_field(trim($row[5] ?? ''));
+            $codi_provincia = sanitize_text_field(trim($row[6] ?? ''));
+            $provincia = sanitize_text_field(trim($row[7] ?? ''));
+
+            // Comprovar dades mínimes
+            if (
+                $codi_municipi === '' ||
+                $poblacio === '' ||
+                $codi_provincia === '' ||
+                $provincia === ''
+            ) {
+                $skipped++;
+                continue;
+            }
+
+            // Comprovar si el municipi ja existeix
+            $exists_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id
+                 FROM $municipis_table
+                 WHERE codi_municipi = %s
+                 LIMIT 1",
+                    $codi_municipi
+                )
+            );
+
+            // Preparar dades
+            $data = array(
+                'codi_municipi' => $codi_municipi,
+                'poblacio' => $poblacio,
+                'codi_comarca' => $codi_comarca,
+                'comarca' => $comarca,
+                'codi_ambit' => $codi_ambit,
+                'ambit' => $ambit,
+                'codi_provincia' => $codi_provincia,
+                'provincia' => $provincia,
+                'created_at' => current_time('mysql')
+            );
+
+            // Formats dels camps
+            $formats = array(
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s'
+            );
+
+            // Si existeix, actualitzar
+            if ($exists_id) {
+
+                $res = $wpdb->update(
+                    $municipis_table,
+                    $data,
+                    array('id' => $exists_id),
+                    $formats,
+                    array('%d')
+                );
+
+                if ($res === false) {
+
+                    error_log(
+                        'import_provincies_municipis_csv: error update: '
+                        . $wpdb->last_error
+                    );
+
+                    $skipped++;
+
+                } else {
+
+                    $updated++;
+                }
+
+            } else {
+
+                // Si no existeix, inserir
+                $res = $wpdb->insert(
+                    $municipis_table,
+                    $data,
+                    $formats
+                );
+
+                if ($res === false) {
+
+                    error_log(
+                        'import_provincies_municipis_csv: error insert: '
+                        . $wpdb->last_error
+                    );
+
+                    $skipped++;
+
+                } else {
+
+                    $inserted++;
+                }
+            }
+        }
+
+        fclose($handle);
+
+        // Escriure resultat al log
+        error_log(
+            "import_provincies_municipis_csv: "
+            . "Inserits={$inserted}, "
+            . "Actualitzats={$updated}, "
+            . "Saltats={$skipped}"
+        );
+
+        return array(
+            'inserted' => $inserted,
+            'updated' => $updated,
+            'skipped' => $skipped
+        );
     }
 
     // FUNCIÓ MODIFICADA: get_points sense dependencies de routes
