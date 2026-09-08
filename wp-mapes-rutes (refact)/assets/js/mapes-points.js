@@ -706,10 +706,22 @@ class MapesPoints {
             },
           );
           // DECISIÓ: si qualsevol de les dues NO coincideix, NO crear
-          if (!(matchName && matchPoblacio)) {
-            window.mapesUI.showAlert(
-              "No s'ha pogut verificar tant el nom del lloc com la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.",
-            );
+          let missatge = "";
+
+          if (!matchName && !matchPoblacio) {
+            missatge =
+              "No s'ha pogut verificar tant el nom del lloc com la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
+          } else if (!matchName) {
+            missatge =
+              "No s'ha pogut verificar el nom del lloc amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
+          } else if (!matchPoblacio) {
+            missatge =
+              "No s'ha pogut verificar el nom de la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
+          }
+
+          if (missatge) {
+            window.mapesUI.showAlert(missatge);
+
             console.warn("Geocoding strict fail:", {
               locationName,
               poblacioInput,
@@ -719,6 +731,7 @@ class MapesPoints {
               matchName,
               matchPoblacio,
             });
+
             return;
           }
 
