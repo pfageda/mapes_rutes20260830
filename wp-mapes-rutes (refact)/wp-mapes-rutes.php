@@ -17,6 +17,8 @@ define('WP_MAPES_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WP_MAPES_ASSETS_URL', WP_MAPES_PLUGIN_URL . 'assets/');
 define('WP_MAPES_TEMPLATES_PATH', WP_MAPES_PLUGIN_PATH . 'templates/');
 
+
+
 /**
  * Classe principal del plugin
  */
@@ -73,6 +75,9 @@ class WP_Mapes_Rutes_Core
             return;
         }
 
+        // Carregar configuració
+        $mapes_constants = require WP_MAPES_PLUGIN_PATH . 'config/constants.php';
+
         // CSS comú per tots els shortcodes
         wp_enqueue_style(
             'mapes-frontend',
@@ -113,6 +118,13 @@ class WP_Mapes_Rutes_Core
                 array('mapes-core'),
                 WP_MAPES_VERSION,
                 true
+            );
+            wp_localize_script(
+                'mapes-routes',
+                'mapesRoutesConfig',
+                array(
+                    'colorsRutes' => $mapes_constants['colors_rutes'],
+                )
             );
 
             // Configuració per mapes-app

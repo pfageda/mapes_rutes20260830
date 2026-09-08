@@ -257,6 +257,9 @@ class MapesRoutes {
     // Generar llista de monuments
     const pointsListHtml = this.generateRoutePointsEditor(route);
 
+    // Generar llista de colors de ruta
+    const colors = mapesRoutesConfig.colorsRutes;
+
     // Crear formulari inline
     editContent.innerHTML = `
       <form class="mapes-edit-form" onsubmit="mapesRoutes.submitInlineRouteEdit('${routeId}', event)">
@@ -269,30 +272,23 @@ class MapesRoutes {
             <label>Nom Ruta *</label>
             <input type="text" name="name" value="${route.name}" required>
           </div>
-          <div class="mapes-form-group">
+         <div class="mapes-form-group">
             <label>Color</label>
             <div class="mapes-color-picker">
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#000000" ? "active" : ""
-              }" 
-                      style="background: #000000;" onclick="selectColor(this, '#000000')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#404040" ? "active" : ""
-              }" 
-                      style="background: #404040;" onclick="selectColor(this, '#404040')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#CC0000" ? "active" : ""
-              }" 
-                      style="background: #CC0000;" onclick="selectColor(this, '#CC0000')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#003366" ? "active" : ""
-              }" 
-                      style="background: #003366;" onclick="selectColor(this, '#003366')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#006600" ? "active" : ""
-              }" 
-                      style="background: #006600;" onclick="selectColor(this, '#006600')"></button>
+              ${mapesRoutesConfig.colorsRutes
+                .map(
+                  (color) => `
+                    <button
+                      type="button"
+                      class="mapes-color-btn ${route.color === color ? "active" : ""}"
+                      style="background: ${color};"
+                      onclick="selectColor(this, '${color}')">
+                    </button>
+                  `,
+                )
+                .join("")}
             </div>
+
             <input type="hidden" name="color" value="${route.color}">
           </div>
           <div class="mapes-form-actions">
