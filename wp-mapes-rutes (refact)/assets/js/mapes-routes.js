@@ -142,12 +142,12 @@ class MapesRoutes {
     }
 
     const selectedPoints = this.getSelectedPointsFromForm(
-      `modal-create-route-${appId}`
+      `modal-create-route-${appId}`,
     );
 
     if (selectedPoints.length < 2) {
       window.mapesUI.showAlert(
-        "Cal seleccionar mínim 2 monuments per crear una ruta"
+        "Cal seleccionar mínim 2 monuments per crear una ruta",
       );
       return;
     }
@@ -177,12 +177,12 @@ class MapesRoutes {
   getSelectedPointsFromForm(modalId) {
     const selectedPoints = [];
     const checkboxes = document.querySelectorAll(
-      `#${modalId} input[name="points[]"]:checked`
+      `#${modalId} input[name="points[]"]:checked`,
     );
 
     checkboxes.forEach((checkbox, index) => {
       const controls = checkbox.parentElement.querySelector(
-        ".mapes-route-point-controls"
+        ".mapes-route-point-controls",
       );
       let order = index + 1;
       let weight = 1;
@@ -331,7 +331,7 @@ class MapesRoutes {
       html += '<h4 style="margin: 0 0 10px 0;">Monuments actuals:</h4>';
       route.points.forEach((routePoint) => {
         const point = window.mapesCore.points.find(
-          (p) => p.id == routePoint.point_id
+          (p) => p.id == routePoint.point_id,
         );
         if (point) {
           html += `
@@ -404,7 +404,7 @@ class MapesRoutes {
 
   updateRoutePreview() {
     const checkboxes = document.querySelectorAll(
-      'input[name="points[]"]:checked'
+      'input[name="points[]"]:checked',
     );
     const selectedPoints = [];
 
@@ -414,7 +414,7 @@ class MapesRoutes {
 
       const parentItem = checkbox.closest(".mapes-route-point-item");
       const orderInput = parentItem.querySelector(
-        '.mapes-control-group:first-child input[type="number"]'
+        '.mapes-control-group:first-child input[type="number"]',
       );
 
       if (point && orderInput) {
@@ -454,16 +454,16 @@ class MapesRoutes {
     // Obtenir monuments seleccionats
     const selectedPoints = [];
     const checkboxes = document.querySelectorAll(
-      'input[name="points[]"]:checked'
+      'input[name="points[]"]:checked',
     );
 
     checkboxes.forEach((checkbox) => {
       const parentItem = checkbox.closest(".mapes-route-point-item");
       const orderInput = parentItem.querySelector(
-        '.mapes-control-group:first-child input[type="number"]'
+        '.mapes-control-group:first-child input[type="number"]',
       );
       const weightInput = parentItem.querySelector(
-        '.mapes-control-group:last-child input[type="number"]'
+        '.mapes-control-group:last-child input[type="number"]',
       );
 
       const orderValue = orderInput ? parseInt(orderInput.value) || 1 : 1;
