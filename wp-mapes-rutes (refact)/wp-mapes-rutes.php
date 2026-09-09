@@ -69,6 +69,10 @@ class WP_Mapes_Rutes_Core
     public function enqueue_frontend_scripts()
     {
         global $post;
+
+        // Carregar configuració
+        $mapes_constants = require WP_MAPES_PLUGIN_PATH . 'config/constants.php';
+
         if (is_admin() || !$post) {
             return;
         }
@@ -113,6 +117,14 @@ class WP_Mapes_Rutes_Core
                 array('mapes-core'),
                 WP_MAPES_VERSION,
                 true
+            );
+
+            wp_localize_script(
+                'mapes-routes',
+                'mapesRoutesConfig',
+                array(
+                    'colorsRutes' => $mapes_constants['colors_rutes'],
+                )
             );
 
             // Configuració per mapes-app

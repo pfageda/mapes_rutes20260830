@@ -719,19 +719,8 @@ class MapesPoints {
               "No s'ha pogut verificar el nom de la població amb Google Maps. Revisa els valors introduïts o prova el mode Coordenades.";
           }
 
-          if (missatge) {
+          if (missatge != "") {
             window.mapesUI.showAlert(missatge);
-
-            console.warn("Geocoding strict fail:", {
-              locationName,
-              poblacioInput,
-              formatted_address: best.formatted_address,
-              poblacioFromGM,
-              provinciaFromGM,
-              matchName,
-              matchPoblacio,
-            });
-
             return;
           }
 

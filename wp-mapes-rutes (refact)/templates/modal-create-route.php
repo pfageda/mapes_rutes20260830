@@ -1,6 +1,10 @@
 <?php if (!defined('ABSPATH'))
     exit; ?>
 
+<?php
+$mapes_constants = require WP_MAPES_PLUGIN_PATH . 'config/constants.php';
+?>
+
 <div id="modal-create-route-<?php echo $app_id; ?>" class="mapes-modal">
     <div class="mapes-modal-content" style="width: 600px; max-width: 90vw;">
         <div class="mapes-modal-header">
@@ -22,16 +26,12 @@
                 <div class="mapes-form-group">
                     <label>Color</label>
                     <div class="mapes-color-picker">
-                        <button type="button" class="mapes-color-btn active" style="background: #000000;"
-                            onclick="selectColor(this, '#000000')"></button>
-                        <button type="button" class="mapes-color-btn" style="background: #404040;"
-                            onclick="selectColor(this, '#404040')"></button>
-                        <button type="button" class="mapes-color-btn" style="background: #CC0000;"
-                            onclick="selectColor(this, '#CC0000')"></button>
-                        <button type="button" class="mapes-color-btn" style="background: #003366;"
-                            onclick="selectColor(this, '#003366')"></button>
-                        <button type="button" class="mapes-color-btn" style="background: #006600;"
-                            onclick="selectColor(this, '#006600')"></button>
+                            <?php foreach ($mapes_constants['colors_rutes'] as $index => $color): ?>
+                            <button type="button" class="mapes-color-btn <?php echo $index === 0 ? 'active' : ''; ?>"
+                                style="background: <?php echo esc_attr($color); ?>;"
+                                onclick="selectColor(this, '<?php echo esc_attr($color); ?>')">
+                            </button>
+                        <?php endforeach; ?>
                     </div>
                     <input type="hidden" name="color" value="#000000">
                 </div>

@@ -142,12 +142,12 @@ class MapesRoutes {
     }
 
     const selectedPoints = this.getSelectedPointsFromForm(
-      `modal-create-route-${appId}`
+      `modal-create-route-${appId}`,
     );
 
     if (selectedPoints.length < 2) {
       window.mapesUI.showAlert(
-        "Cal seleccionar mínim 2 monuments per crear una ruta"
+        "Cal seleccionar mínim 2 monuments per crear una ruta",
       );
       return;
     }
@@ -177,12 +177,12 @@ class MapesRoutes {
   getSelectedPointsFromForm(modalId) {
     const selectedPoints = [];
     const checkboxes = document.querySelectorAll(
-      `#${modalId} input[name="points[]"]:checked`
+      `#${modalId} input[name="points[]"]:checked`,
     );
 
     checkboxes.forEach((checkbox, index) => {
       const controls = checkbox.parentElement.querySelector(
-        ".mapes-route-point-controls"
+        ".mapes-route-point-controls",
       );
       let order = index + 1;
       let weight = 1;
@@ -256,6 +256,7 @@ class MapesRoutes {
 
     // Generar llista de monuments
     const pointsListHtml = this.generateRoutePointsEditor(route);
+    const colors = mapesRoutesConfig.colorsRutes;
 
     // Crear formulari inline
     editContent.innerHTML = `
@@ -269,30 +270,23 @@ class MapesRoutes {
             <label>Nom Ruta *</label>
             <input type="text" name="name" value="${route.name}" required>
           </div>
-          <div class="mapes-form-group">
+         <div class="mapes-form-group">
             <label>Color</label>
             <div class="mapes-color-picker">
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#000000" ? "active" : ""
-              }" 
-                      style="background: #000000;" onclick="selectColor(this, '#000000')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#404040" ? "active" : ""
-              }" 
-                      style="background: #404040;" onclick="selectColor(this, '#404040')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#CC0000" ? "active" : ""
-              }" 
-                      style="background: #CC0000;" onclick="selectColor(this, '#CC0000')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#003366" ? "active" : ""
-              }" 
-                      style="background: #003366;" onclick="selectColor(this, '#003366')"></button>
-              <button type="button" class="mapes-color-btn ${
-                route.color === "#006600" ? "active" : ""
-              }" 
-                      style="background: #006600;" onclick="selectColor(this, '#006600')"></button>
+              ${mapesRoutesConfig.colorsRutes
+                .map(
+                  (color) => `
+                    <button
+                      type="button"
+                      class="mapes-color-btn ${route.color === color ? "active" : ""}"
+                      style="background: ${color};"
+                      onclick="selectColor(this, '${color}')">
+                    </button>
+                  `,
+                )
+                .join("")}
             </div>
+
             <input type="hidden" name="color" value="${route.color}">
           </div>
           <div class="mapes-form-actions">
@@ -331,7 +325,7 @@ class MapesRoutes {
       html += '<h4 style="margin: 0 0 10px 0;">Monuments actuals:</h4>';
       route.points.forEach((routePoint) => {
         const point = window.mapesCore.points.find(
-          (p) => p.id == routePoint.point_id
+          (p) => p.id == routePoint.point_id,
         );
         if (point) {
           html += `
@@ -404,7 +398,7 @@ class MapesRoutes {
 
   updateRoutePreview() {
     const checkboxes = document.querySelectorAll(
-      'input[name="points[]"]:checked'
+      'input[name="points[]"]:checked',
     );
     const selectedPoints = [];
 
@@ -414,7 +408,7 @@ class MapesRoutes {
 
       const parentItem = checkbox.closest(".mapes-route-point-item");
       const orderInput = parentItem.querySelector(
-        '.mapes-control-group:first-child input[type="number"]'
+        '.mapes-control-group:first-child input[type="number"]',
       );
 
       if (point && orderInput) {
@@ -454,16 +448,16 @@ class MapesRoutes {
     // Obtenir monuments seleccionats
     const selectedPoints = [];
     const checkboxes = document.querySelectorAll(
-      'input[name="points[]"]:checked'
+      'input[name="points[]"]:checked',
     );
 
     checkboxes.forEach((checkbox) => {
       const parentItem = checkbox.closest(".mapes-route-point-item");
       const orderInput = parentItem.querySelector(
-        '.mapes-control-group:first-child input[type="number"]'
+        '.mapes-control-group:first-child input[type="number"]',
       );
       const weightInput = parentItem.querySelector(
-        '.mapes-control-group:last-child input[type="number"]'
+        '.mapes-control-group:last-child input[type="number"]',
       );
 
       const orderValue = orderInput ? parseInt(orderInput.value) || 1 : 1;
