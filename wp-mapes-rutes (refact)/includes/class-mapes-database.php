@@ -170,54 +170,48 @@ class WP_Mapes_Database
             error_log('TAULA ACTIVITAT_POINTS JA EXISTEIX');
         }
 
-        // CREAR TAULA DE MAPPING DME
+        // =========================================================================
+        // 1. TAULA DME_MAP
+        // =========================================================================
         $dme_table = $wpdb->prefix . 'mapes_dme_map';
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$dme_table'");
-
-        if ($table_exists != $dme_table) {
-            $dme_sql = "CREATE TABLE $dme_table (
+        $dme_sql = "CREATE TABLE $dme_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         provincia VARCHAR(191) NOT NULL,
         poblacio VARCHAR(191) NOT NULL,
-        campdme VARCHAR(5) NOT NULL,
+        campdme VARCHAR(10) NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
-        UNIQUE KEY uk_provincia_poblacio (provincia(100), poblacio(100)),
-        KEY idx_provincia (provincia(100)),
-        KEY idx_poblacio (poblacio(100))
-        ) $charset_collate";
+        UNIQUE KEY uk_prov_pobl (provincia(100), poblacio(100)),
+        KEY idx_campdme (campdme)
+    ) $charset_collate;";
 
-            $result = $wpdb->query($dme_sql);
-            if ($result === false) {
-                error_log('ERROR CREANT TAULA DME_MAP: ' . $wpdb->last_error);
-                error_log('SQL: ' . $dme_sql);
+        dbDelta($dme_sql);
+
+        // IMPORTACIÓ DME (Comprovem directament a MySQL si la taula existeix i està buida)
+        $dme_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $dme_table));
+        if ($dme_exists === $dme_table) {
+            $csv_dme = dirname(__DIR__) . '/dades/dme.csv';
+
+            if (file_exists($csv_dme) && is_readable($csv_dme)) {
+                $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $dme_table");
+
+                if ($count === 0) {
+                    error_log('Taula DME_MAP buida — Iniciant importació des de: ' . $csv_dme);
+                    $res = self::import_dme_csv($dme_table, $csv_dme);
+                    error_log('Resultat importació DME: ' . print_r($res, true));
+                } else {
+                    error_log("DME_MAP ja conté $count files; no s'importa CSV.");
+                }
             } else {
-                error_log('TAULA DME_MAP CREADA CORRECTAMENT');
+                error_log('ERROR CSV DME: Fitxer no trobat a ' . $csv_dme);
             }
-        } else {
-            error_log('TAULA DME_MAP JA EXISTEIX');
         }
-        $csv_path = dirname(__DIR__) . '/dades/dme.csv';
 
-        // Comprovem si el fitxer és llegible I la taula existeix
-        if (file_exists($csv_path) && is_readable($csv_path) && $table_exists === $dme_table) {
-            $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $dme_table");
-
-            if ($count === 0) {
-                error_log('Important DME des de: ' . $csv_path);
-                self::import_dme_csv($dme_table, $csv_path);
-            } else {
-                error_log("DME_MAP ja conté $count files; no s'importa CSV");
-            }
-        } elseif (!file_exists($csv_path) || !is_readable($csv_path)) {
-            error_log('CSV DME no trobat o no llegible a ' . $csv_path . '; saltant import.');
-        }
-        // CREAR TAULA DE PROVÍNCIES I MUNICIPIS
+        // =========================================================================
+        // 2. TAULA PROVINCIES I MUNICIPIS
+        // =========================================================================
         $municipis_table = $wpdb->prefix . 'mapes_provincies_municipis';
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$municipis_table'");
-
-        if ($table_exists != $municipis_table) {
-            $municipis_sql = "CREATE TABLE $municipis_table (
+        $municipis_sql = "CREATE TABLE $municipis_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         provincia VARCHAR(191) NOT NULL,
         poblacio VARCHAR(191) NOT NULL,
@@ -226,21 +220,29 @@ class WP_Mapes_Database
         UNIQUE KEY uk_provincia_poblacio (provincia(100), poblacio(100)),
         KEY idx_provincia (provincia(100)),
         KEY idx_poblacio (poblacio(100))
-        ) $charset_collate";
+    ) $charset_collate;";
 
-            $result = $wpdb->query($municipis_sql);
+        dbDelta($municipis_sql);
 
-            if ($result === false) {
-                error_log('ERROR CREANT TAULA PROVINCIES_MUNICIPIS: ' . $wpdb->last_error);
-                error_log('SQL: ' . $municipis_sql);
+        // IMPORTACIÓ MUNICIPIS (Comprovem directament a MySQL si la taula existeix i està buida)
+        $muni_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $municipis_table));
+        if ($muni_exists === $municipis_table) {
+            $csv_muni = dirname(__DIR__) . '/dades/provincies_municipis.csv';
+
+            if (file_exists($csv_muni) && is_readable($csv_muni)) {
+                $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $municipis_table");
+
+                if ($count === 0) {
+                    error_log('Taula MUNICIPIS buida — Iniciant importació des de: ' . $csv_muni);
+                    $res = self::import_municipis_csv($municipis_table, $csv_muni);
+                    error_log('Resultat importació MUNICIPIS: ' . print_r($res, true));
+                } else {
+                    error_log("Taula MUNICIPIS ja conté $count files; no s'importa CSV.");
+                }
             } else {
-                error_log('TAULA PROVINCIES_MUNICIPIS CREADA CORRECTAMENT');
+                error_log('ERROR CSV MUNICIPIS: Fitxer no trobat a ' . $csv_muni);
             }
-        } else {
-            error_log('TAULA PROVINCIES_MUNICIPIS JA EXISTEIX');
         }
-
-
         // La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
         error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'mapes_activacions; la taula està consolidada a mapes_activitats.');
 
@@ -296,6 +298,9 @@ class WP_Mapes_Database
         $updated = 0;
         $skipped = 0;
 
+        // 1. INICIEM LA TRANSACCIÓ
+        $wpdb->query('START TRANSACTION');
+
         while (($row = fgetcsv($handle)) !== false) {
             if (count($row) < 5) {
                 $skipped++;
@@ -304,6 +309,8 @@ class WP_Mapes_Database
             $prov_name = sanitize_text_field(trim($row[2] ?? ''));
             $dme_number_raw = trim($row[3] ?? '');
             $dme_name = sanitize_text_field(trim($row[4] ?? ''));
+
+
 
             // Normalitzar campdme: només dígits, prendre últims 5 i pad a 5
             $dme_digits = preg_replace('/\D+/', '', $dme_number_raw);
@@ -347,8 +354,80 @@ class WP_Mapes_Database
                 }
             }
         }
+        // 2. CONFIRMEM LA TRANSACCIÓ
+        $wpdb->query('COMMIT');
+
         fclose($handle);
         error_log("import_dme_csv: Inserits={$inserted}, Actualitzats={$updated}, Saltats={$skipped}");
+        return array('inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped);
+    }
+
+    private static function import_municipis_csv($municipis_table, $csv_path)
+    {
+        global $wpdb;
+        $handle = @fopen($csv_path, 'r');
+        if (!$handle) {
+            error_log('import_municipis_csv: no s\'ha pogut obrir: ' . $csv_path);
+            return false;
+        }
+
+        $header = fgetcsv($handle);
+        $inserted = 0;
+        $updated = 0;
+        $skipped = 0;
+
+        // 1. INICIEM LA TRANSACCIÓ AQUÍ (Abans del bucle)
+        $wpdb->query('START TRANSACTION');
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 3) {
+                $skipped++;
+                continue;
+            }
+
+            $pobl_name = sanitize_text_field(trim($row[0] ?? ''));
+            $prov_name = sanitize_text_field(trim($row[2] ?? ''));
+
+            if (empty($prov_name) || empty($pobl_name)) {
+                $skipped++;
+                continue;
+            }
+
+            $exists_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $municipis_table WHERE provincia = %s AND poblacio = %s LIMIT 1",
+                $prov_name,
+                $pobl_name
+            ));
+
+            $data = array(
+                'provincia' => $prov_name,
+                'poblacio' => $pobl_name,
+                'created_at' => current_time('mysql')
+            );
+            $formats = array('%s', '%s', '%s');
+
+            if ($exists_id) {
+                $res = $wpdb->update($municipis_table, $data, array('id' => $exists_id), $formats, array('%d'));
+                if ($res === false) {
+                    $skipped++;
+                } else {
+                    $updated++;
+                }
+            } else {
+                $res = $wpdb->insert($municipis_table, $data, $formats);
+                if ($res === false) {
+                    $skipped++;
+                } else {
+                    $inserted++;
+                }
+            }
+        }
+
+        // 2. CONFIRMEM LA TRANSACCIÓ AQUÍ (Després del bucle)
+        $wpdb->query('COMMIT');
+
+        fclose($handle);
+        error_log("import_municipis_csv: Inserits={$inserted}, Actualitzats={$updated}, Saltats={$skipped}");
         return array('inserted' => $inserted, 'updated' => $updated, 'skipped' => $skipped);
     }
 
