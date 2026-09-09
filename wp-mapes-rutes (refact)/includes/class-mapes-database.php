@@ -185,7 +185,7 @@ class WP_Mapes_Database
         UNIQUE KEY uk_provincia_poblacio (provincia(100), poblacio(100)),
         KEY idx_provincia (provincia(100)),
         KEY idx_poblacio (poblacio(100))
-    ) $charset_collate";
+        ) $charset_collate";
 
             $result = $wpdb->query($dme_sql);
             if ($result === false) {
@@ -197,30 +197,47 @@ class WP_Mapes_Database
         } else {
             error_log('TAULA DME_MAP JA EXISTEIX');
         }
-        // If the table was just created, try importing a CSV placed in plugin/dades/dme.csv
         $csv_path = dirname(__DIR__) . '/dades/dme.csv';
-        if (file_exists($csv_path) && is_readable($csv_path)) {
-            $count = intval($wpdb->get_var("SELECT COUNT(*) FROM $dme_table"));
+
+        // Comprovem si el fitxer és llegible I la taula existeix
+        if (file_exists($csv_path) && is_readable($csv_path) && $table_exists === $dme_table) {
+            $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $dme_table");
+
             if ($count === 0) {
                 error_log('Important DME des de: ' . $csv_path);
                 self::import_dme_csv($dme_table, $csv_path);
             } else {
                 error_log("DME_MAP ja conté $count files; no s'importa CSV");
             }
-        } else {
+        } elseif (!file_exists($csv_path) || !is_readable($csv_path)) {
             error_log('CSV DME no trobat o no llegible a ' . $csv_path . '; saltant import.');
         }
+        // CREAR TAULA DE PROVÍNCIES I MUNICIPIS
+        $municipis_table = $wpdb->prefix . 'mapes_provincies_municipis';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$municipis_table'");
 
-        // If table exists but empty, optionally import as well
-        if ($table_exists == $dme_table) {
-            $csv_path = dirname(__DIR__) . '/dades/dme.csv';
-            if (file_exists($csv_path) && is_readable($csv_path)) {
-                $count = intval($wpdb->get_var("SELECT COUNT(*) FROM $dme_table"));
-                if ($count === 0) {
-                    error_log('Taula DME_MAP existent però buida — important DME des de: ' . $csv_path);
-                    self::import_dme_csv($dme_table, $csv_path);
-                }
+        if ($table_exists != $municipis_table) {
+            $municipis_sql = "CREATE TABLE $municipis_table (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        provincia VARCHAR(191) NOT NULL,
+        poblacio VARCHAR(191) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uk_provincia_poblacio (provincia(100), poblacio(100)),
+        KEY idx_provincia (provincia(100)),
+        KEY idx_poblacio (poblacio(100))
+        ) $charset_collate";
+
+            $result = $wpdb->query($municipis_sql);
+
+            if ($result === false) {
+                error_log('ERROR CREANT TAULA PROVINCIES_MUNICIPIS: ' . $wpdb->last_error);
+                error_log('SQL: ' . $municipis_sql);
+            } else {
+                error_log('TAULA PROVINCIES_MUNICIPIS CREADA CORRECTAMENT');
             }
+        } else {
+            error_log('TAULA PROVINCIES_MUNICIPIS JA EXISTEIX');
         }
 
 
@@ -604,26 +621,60 @@ class WP_Mapes_Database
     }
 
     // OPERACIONS PUNTS DE RUTA
-    public static function insert_route_points($route_id, $points)
+    // file: includes/class-mapes-database.php
+    public static function insert_route_points($route_id, $points, $assign_codes = false, $drmc = 'DMRC', $overwrite = true)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_route_points';
+        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $points_table = $wpdb->prefix . 'mapes_points';
+        $routes_table = $wpdb->prefix . 'mapes_routes';
 
-        // Eliminar monuments existents
-        $wpdb->delete($table, array('route_id' => $route_id), array('%d'));
+        // Eliminar monuments existents per a la ruta
+        $wpdb->delete($route_points_table, array('route_id' => $route_id), array('%d'));
 
-        // Inserir nous monuments
+        // Llegir codi de la ruta si cal assignar
+        $route_code = '';
+        if ($assign_codes) {
+            $route_code = $wpdb->get_var($wpdb->prepare("SELECT code FROM $routes_table WHERE id = %d", $route_id));
+            $route_code = $route_code ? sanitize_text_field($route_code) : '';
+        }
+
         foreach ($points as $point) {
+            $point_id = intval($point['point_id']);
+            $order_num = intval($point['order']);
+            $weight = isset($point['weight']) ? floatval($point['weight']) : 1.0;
+
             $wpdb->insert(
-                $table,
+                $route_points_table,
                 array(
                     'route_id' => $route_id,
-                    'point_id' => intval($point['point_id']),
-                    'order_num' => intval($point['order']),
-                    'weight' => floatval($point['weight'])
+                    'point_id' => $point_id,
+                    'order_num' => $order_num,
+                    'weight' => $weight
                 ),
                 array('%d', '%d', '%d', '%f')
             );
+
+            if ($assign_codes && $route_code !== '' && $point_id) {
+                // ordre en HEX d'un sol caràcter: agafem order_num % 16 i convertim a hex (majúscula)
+                $hex = strtoupper(dechex($order_num % 16)); // 0..F
+                // construir codi sense separadors: DMRC + ROUTE_CODE + HEX
+                $new_code = sanitize_text_field($drmc) . $route_code . $hex;
+
+                if ($overwrite) {
+                    $wpdb->update($points_table, array('codi' => $new_code), array('id' => $point_id), array('%s'), array('%d'));
+                    error_log("Assigned codi {$new_code} to point {$point_id} for route {$route_id}");
+                } else {
+                    // només si està buit o NULL
+                    $current = $wpdb->get_var($wpdb->prepare("SELECT codi FROM $points_table WHERE id = %d LIMIT 1", $point_id));
+                    if ($current === null || $current === '') {
+                        $wpdb->update($points_table, array('codi' => $new_code), array('id' => $point_id), array('%s'), array('%d'));
+                        error_log("Assigned codi {$new_code} to point {$point_id} (was empty) for route {$route_id}");
+                    } else {
+                        error_log("Skipped assigning codi to point {$point_id} because it already has codi='{$current}'");
+                    }
+                }
+            }
         }
 
         return true;

@@ -71,16 +71,16 @@ class WP_Mapes_Ajax
         $this->verify_nonce();
 
         // ⭐ RECOLLIR TOTS ELS CAMPS NECESSARIS (NO NOMÉS 4)
-        $title = sanitize_text_field($_POST['title'] ?? '');
-        $description = sanitize_textarea_field($_POST['description'] ?? '');
+        $title = sanitize_text_field(stripslashes($_POST['title'] ?? ''));
+        $description = sanitize_textarea_field(stripslashes($_POST['description'] ?? ''));
         $lat = floatval($_POST['lat'] ?? 0);
         $lng = floatval($_POST['lng'] ?? 0);
 
         // ⭐ AFEGIR AQUESTS CAMPS QUE FALTAVEN:
-        $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
-        $provincia = sanitize_text_field($_POST['provincia'] ?? '');
-        $codi = isset($_POST['codi']) ? sanitize_text_field($_POST['codi']) : null;
-        $dme = isset($_POST['dme']) ? sanitize_text_field($_POST['dme']) : null;
+        $poblacio = sanitize_text_field(stripslashes($_POST['poblacio'] ?? ''));
+        $provincia = sanitize_text_field(stripslashes($_POST['provincia'] ?? ''));
+        $codi = isset($_POST['codi']) ? sanitize_text_field(stripslashes($_POST['codi'])) : null;
+        $dme = isset($_POST['dme']) ? sanitize_text_field(stripslashes($_POST['dme'])) : null;
 
         error_log("POST REBUT: " . print_r($_POST, true));
 
@@ -320,7 +320,8 @@ class WP_Mapes_Ajax
         ));
 
         if ($route_id) {
-            WP_Mapes_Database::insert_route_points($route_id, $points);
+            // file: includes/class-mapes-ajax.php inside create_route, after $route_id is created
+            WP_Mapes_Database::insert_route_points($route_id, $points, true, 'DMRC', true);
             wp_send_json_success(array(
                 'message' => 'Ruta creada correctament',
                 'route_id' => $route_id
@@ -358,7 +359,7 @@ class WP_Mapes_Ajax
         ));
 
         if ($result !== false) {
-            WP_Mapes_Database::insert_route_points($id, $points);
+            WP_Mapes_Database::insert_route_points($id, $points, true, 'DMRC', true);
             wp_send_json_success('Ruta actualitzada correctament');
         } else {
             wp_send_json_error('Error actualitzant ruta');
