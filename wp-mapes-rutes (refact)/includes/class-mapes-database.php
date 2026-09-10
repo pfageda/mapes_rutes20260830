@@ -16,7 +16,7 @@ class WP_Mapes_Database
         // Debug per saber que la funció s'executa
         error_log('Executant create_tables()');
         global $wpdb;
-        $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}mapes_%'");
+        $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}dmrc_%'");
 
         // Debug per veure les taules existents abans de crear de noves
         error_log("TAULES EXISTENTS: " . print_r($tables, true));
@@ -25,7 +25,7 @@ class WP_Mapes_Database
         $charset_collate = $wpdb->get_charset_collate();
 
         // CREAR TAULA DE RUTES MANUALMENT (per evitar error dbDelta)
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
         $table_exists_routes = $wpdb->get_var("SHOW TABLES LIKE '$routes_table'");
 
         if ($table_exists_routes != $routes_table) {
@@ -51,7 +51,7 @@ class WP_Mapes_Database
         }
 
         // Taula de monuments (funciona amb dbDelta)
-        $points_table = $wpdb->prefix . 'mapes_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
         $points_sql = "CREATE TABLE $points_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             title varchar(255) NOT NULL,
@@ -74,7 +74,7 @@ class WP_Mapes_Database
         ) $charset_collate;";
 
         // Taula de relació ruta-monuments (funciona amb dbDelta)
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
         $route_points_sql = "CREATE TABLE $route_points_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             route_id int(11) NOT NULL,
@@ -93,7 +93,7 @@ class WP_Mapes_Database
         dbDelta($route_points_sql);
 
         // CREAR TAULA D'ACTIVITATS MANUALMENT (dbDelta falla amb aquesta)
-        $activitats_table = $wpdb->prefix . 'mapes_activitats';
+        $activitats_table = $wpdb->prefix . 'dmrc_activitats';
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$activitats_table'");
 
         if ($table_exists != $activitats_table) {
@@ -143,7 +143,7 @@ class WP_Mapes_Database
             error_log('TAULA ACTIVITATS JA EXISTEIX');
         }
 
-        $activitat_points_table = $wpdb->prefix . 'mapes_activitat_points';
+        $activitat_points_table = $wpdb->prefix . 'dmrc_activitat_points';
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$activitat_points_table'");
 
         if ($table_exists != $activitat_points_table) {
@@ -173,7 +173,7 @@ class WP_Mapes_Database
         // =========================================================================
         // 1. TAULA DME_MAP
         // =========================================================================
-        $dme_table = $wpdb->prefix . 'mapes_dme_map';
+        $dme_table = $wpdb->prefix . 'dmrc_dme_map';
         $dme_sql = "CREATE TABLE $dme_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         provincia VARCHAR(191) NOT NULL,
@@ -210,7 +210,7 @@ class WP_Mapes_Database
         // =========================================================================
         // 2. TAULA PROVINCIES I MUNICIPIS
         // =========================================================================
-        $municipis_table = $wpdb->prefix . 'mapes_provincies_municipis';
+        $municipis_table = $wpdb->prefix . 'dmrc_provincies_municipis';
         $municipis_sql = "CREATE TABLE $municipis_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         provincia VARCHAR(191) NOT NULL,
@@ -243,11 +243,11 @@ class WP_Mapes_Database
                 error_log('ERROR CSV MUNICIPIS: Fitxer no trobat a ' . $csv_muni);
             }
         }
-        // La gestió es centralitza a mapes_activitats; la neteja/rename es fa per migració segura.
-        error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'mapes_activacions; la taula està consolidada a mapes_activitats.');
+        // La gestió es centralitza a dmrc_activitats; la neteja/rename es fa per migració segura.
+        error_log('Mapes: omesa la creació automàtica de ' . $wpdb->prefix . 'dmrc_activacions; la taula està consolidada a dmrc_activitats.');
 
         // CREAR TAULA DE DOCUMENTS D'ACTIVACIONS
-        $documents_table = $wpdb->prefix . 'mapes_activitat_documents';
+        $documents_table = $wpdb->prefix . 'dmrc_activitat_documents';
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$documents_table'");
 
         if ($table_exists != $documents_table) {
@@ -435,9 +435,9 @@ class WP_Mapes_Database
     public static function get_points($limit = null)
     {
         global $wpdb;
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         $sql = "SELECT p.*, GROUP_CONCAT(r.code ORDER BY r.code SEPARATOR ', ') as route_codes
             FROM $points_table p
@@ -479,15 +479,15 @@ class WP_Mapes_Database
     public static function get_point($id)
     {
         global $wpdb;
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         // COMPROVAR SI LA TAULA ROUTES EXISTEIX
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$routes_table'");
 
         if ($table_exists == $routes_table) {
             // Si existeix routes, usar query completa
-            $route_points_table = $wpdb->prefix . 'mapes_route_points';
+            $route_points_table = $wpdb->prefix . 'dmrc_route_points';
 
             $point = $wpdb->get_row($wpdb->prepare(
                 "SELECT p.*, 
@@ -517,7 +517,7 @@ class WP_Mapes_Database
     public static function insert_point($data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_points';
+        $table = $wpdb->prefix . 'dmrc_points';
 
         $result = $wpdb->insert(
             $table,
@@ -550,7 +550,7 @@ class WP_Mapes_Database
     public static function update_point($id, $data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_points';
+        $table = $wpdb->prefix . 'dmrc_points';
 
         // ⭐ DEBUG TEMPORAL
         error_log('=== UPDATE_POINT DEBUG ===');
@@ -589,7 +589,7 @@ class WP_Mapes_Database
     public static function delete_point($id)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_points';
+        $table = $wpdb->prefix . 'dmrc_points';
 
         return $wpdb->delete($table, array('id' => $id), array('%d'));
     }
@@ -598,7 +598,7 @@ class WP_Mapes_Database
     public static function get_routes($with_points = true)
     {
         global $wpdb;
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         // COMPROVAR SI LA TAULA EXISTEIX
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$routes_table'");
@@ -610,8 +610,8 @@ class WP_Mapes_Database
         $routes = $wpdb->get_results("SELECT * FROM $routes_table ORDER BY created_at DESC");
 
         if ($with_points && $routes) {
-            $route_points_table = $wpdb->prefix . 'mapes_route_points';
-            $points_table = $wpdb->prefix . 'mapes_points';
+            $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+            $points_table = $wpdb->prefix . 'dmrc_points';
 
             foreach ($routes as $route) {
                 $route->points = $wpdb->get_results($wpdb->prepare("
@@ -640,7 +640,7 @@ class WP_Mapes_Database
     public static function insert_route($data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_routes';
+        $table = $wpdb->prefix . 'dmrc_routes';
 
         $result = $wpdb->insert(
             $table,
@@ -658,7 +658,7 @@ class WP_Mapes_Database
     public static function update_route($id, $data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_routes';
+        $table = $wpdb->prefix . 'dmrc_routes';
 
         return $wpdb->update(
             $table,
@@ -675,8 +675,8 @@ class WP_Mapes_Database
     public static function get_route_points($route_id)
     {
         global $wpdb;
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
-        $points_table = $wpdb->prefix . 'mapes_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
 
         return $wpdb->get_results($wpdb->prepare("
         SELECT p.*, rp.order_num, rp.weight
@@ -689,8 +689,8 @@ class WP_Mapes_Database
     public static function delete_route($id)
     {
         global $wpdb;
-        $routes_table = $wpdb->prefix . 'mapes_routes';
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
 
         // Eliminar monuments de ruta primer
         $wpdb->delete($route_points_table, array('route_id' => $id), array('%d'));
@@ -704,9 +704,9 @@ class WP_Mapes_Database
     public static function insert_route_points($route_id, $points, $assign_codes = false, $drmc = 'DMRC', $overwrite = true)
     {
         global $wpdb;
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         // Eliminar monuments existents per a la ruta
         $wpdb->delete($route_points_table, array('route_id' => $route_id), array('%d'));
@@ -763,14 +763,14 @@ class WP_Mapes_Database
     public static function insert_activitat($data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
 
         // VERIFICAR I CREAR TAULA SI NO EXISTEIX
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
         if ($table_exists != $table) {
             $charset_collate = $wpdb->get_charset_collate();
-            $create_sql = "CREATE TABLE wp_mapes_activitats (
+            $create_sql = "CREATE TABLE wp_dmrc_activitats (
     id int(11) NOT NULL AUTO_INCREMENT,
     route_id int(11) NOT NULL,
     user_id int(11) DEFAULT NULL,
@@ -846,8 +846,8 @@ class WP_Mapes_Database
     public static function get_activitat_by_email_code($email, $code)
     {
         global $wpdb;
-        $activitats_table = $wpdb->prefix . 'mapes_activitats';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $activitats_table = $wpdb->prefix . 'dmrc_activitats';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         return $wpdb->get_row($wpdb->prepare(
             "SELECT a.*, r.code as route_code, r.name as route_name, r.color as route_color
@@ -862,7 +862,7 @@ class WP_Mapes_Database
     public static function update_activitat_documentation($id, $files_data)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         return $wpdb->update(
             $table,
@@ -881,8 +881,8 @@ class WP_Mapes_Database
     public static function get_activitats_by_status($status = 'creada', $limit = null)
     {
         global $wpdb;
-        $activitats_table = $wpdb->prefix . 'mapes_activitats';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $activitats_table = $wpdb->prefix . 'dmrc_activitats';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
 
         $sql = "SELECT a.*, r.code as route_code, r.name as route_name
                 FROM $activitats_table a
@@ -900,7 +900,7 @@ class WP_Mapes_Database
     private static function generate_activation_code()
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         do {
             // Generar codi aleatori de 10 caràcters (lletres i números)
@@ -923,9 +923,9 @@ class WP_Mapes_Database
 
         // ⭐ OBTENIR INFORMACIÓ DEL MONUMENT SELECCIONAT
         global $wpdb;
-        $routes_table = $wpdb->prefix . 'mapes_routes';
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
-        $points_table = $wpdb->prefix . 'mapes_points';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
 
         // Trobar la ruta per nom
         $route = $wpdb->get_row($wpdb->prepare(
@@ -1093,7 +1093,7 @@ class WP_Mapes_Database
     public static function insert_activitat_points($activitat_id, $point_ids)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitat_points';
+        $table = $wpdb->prefix . 'dmrc_activitat_points';
 
         // Eliminar monuments existents de l'activitat
         $wpdb->delete($table, array('activitat_id' => $activitat_id), array('%d'));
@@ -1117,8 +1117,8 @@ class WP_Mapes_Database
     public static function get_activitat_points($activitat_id)
     {
         global $wpdb;
-        $activitat_points_table = $wpdb->prefix . 'mapes_activitat_points';
-        $points_table = $wpdb->prefix . 'mapes_points';
+        $activitat_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
 
         return $wpdb->get_results($wpdb->prepare("
         SELECT p.*, ap.created_at as selected_at
@@ -1137,7 +1137,7 @@ class WP_Mapes_Database
     public static function get_activation_stats()
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         // ⭐ DEBUG TEMPORAL
         $debug_query = "SELECT status, COUNT(*) as count FROM $table GROUP BY status";
@@ -1166,10 +1166,10 @@ class WP_Mapes_Database
     public static function get_pending_activations()
     {
         global $wpdb;
-        $activations_table = $wpdb->prefix . 'mapes_activitats';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
-        $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $activations_table = $wpdb->prefix . 'dmrc_activitats';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
+        $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
 
         $results = $wpdb->get_results("
         SELECT 
@@ -1246,10 +1246,10 @@ class WP_Mapes_Database
     public static function get_created_activations($limit = 50)
     {
         global $wpdb;
-        $activations_table = $wpdb->prefix . 'mapes_activitats';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
-        $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $activations_table = $wpdb->prefix . 'dmrc_activitats';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
+        $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
 
         $results = $wpdb->get_results($wpdb->prepare("
         SELECT 
@@ -1294,10 +1294,10 @@ class WP_Mapes_Database
     public static function getConfirmedActivations($limit = 50)
     {
         global $wpdb;
-        $activations_table = $wpdb->prefix . 'mapes_activitats';
-        $routes_table = $wpdb->prefix . 'mapes_routes';
-        $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
-        $routepoints_table = $wpdb->prefix . 'mapes_route_points';
+        $activations_table = $wpdb->prefix . 'dmrc_activitats';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
+        $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+        $routepoints_table = $wpdb->prefix . 'dmrc_route_points';
 
         $results = $wpdb->get_results($wpdb->prepare("
         SELECT a.*,
@@ -1342,7 +1342,7 @@ class WP_Mapes_Database
     public static function confirm_activation($activation_id)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         $result = $wpdb->update(
             $table,
@@ -1370,7 +1370,7 @@ class WP_Mapes_Database
     public static function reject_activation($activation_id, $reason = '')
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         return $wpdb->update(
             $table,
@@ -1392,7 +1392,7 @@ class WP_Mapes_Database
     public static function delete_activation($activation_id)
     {
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         return $wpdb->update(
             $table,
@@ -1413,9 +1413,9 @@ class WP_Mapes_Database
     private static function update_points_last_activation($activation_id)
     {
         global $wpdb;
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
-        $activations_table = $wpdb->prefix . 'mapes_activitats';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+        $activations_table = $wpdb->prefix . 'dmrc_activitats';
 
         // Obtenir data de l'activació
         $activation_date = $wpdb->get_var($wpdb->prepare("
@@ -1438,9 +1438,9 @@ class WP_Mapes_Database
     public static function get_points_with_status()
     {
         global $wpdb;
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $activities_table = $wpdb->prefix . 'mapes_activitats';
-        $activity_points_table = $wpdb->prefix . 'mapes_activitat_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $activities_table = $wpdb->prefix . 'dmrc_activitats';
+        $activity_points_table = $wpdb->prefix . 'dmrc_activitat_points';
 
         $points = $wpdb->get_results("
         SELECT 
@@ -1478,9 +1478,9 @@ class WP_Mapes_Database
     public static function get_points_with_activation_status()
     {
         global $wpdb;
-        $points_table = $wpdb->prefix . 'mapes_points';
-        $activations_table = $wpdb->prefix . 'mapes_activitats';
-        $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
+        $activations_table = $wpdb->prefix . 'dmrc_activitats';
+        $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
 
         $three_years_ago = date('Y-m-d H:i:s', strtotime('-3 years'));
 
@@ -1543,8 +1543,8 @@ class WP_Mapes_Database
             return $points;
 
         global $wpdb;
-        $activitats_table = $wpdb->prefix . 'mapes_activitats';
-        $activitat_points_table = $wpdb->prefix . 'mapes_activitat_points';
+        $activitats_table = $wpdb->prefix . 'dmrc_activitats';
+        $activitat_points_table = $wpdb->prefix . 'dmrc_activitat_points';
 
         foreach ($points as &$point) {
             $vegades_activat = intval($point->vegades_activat ?? 0);
@@ -1596,7 +1596,7 @@ class WP_Mapes_Database
     public static function update_activitat_adi($activitat_id, $filename)
     {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'mapes_activitats';
+        $table_name = $wpdb->prefix . 'dmrc_activitats';
 
         $result = $wpdb->update(
             $table_name,

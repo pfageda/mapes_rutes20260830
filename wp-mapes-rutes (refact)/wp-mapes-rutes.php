@@ -226,13 +226,14 @@ class WP_Mapes_Rutes_Core
     {
         global $wpdb;
         $tables_to_check = [
-            $wpdb->prefix . 'mapes_points',
-            $wpdb->prefix . 'mapes_routes',
-            $wpdb->prefix . 'mapes_route_points',
-            $wpdb->prefix . 'mapes_activitats',
-            $wpdb->prefix . 'mapes_activitat_points',
-            $wpdb->prefix . 'mapes_activitat_documents',
-            $wpdb->prefix . 'mapes_dme_map'
+            $wpdb->prefix . 'dmrc_points',
+            $wpdb->prefix . 'dmrc_routes',
+            $wpdb->prefix . 'dmrc_route_points',
+            $wpdb->prefix . 'dmrc_activitats',
+            $wpdb->prefix . 'dmrc_activitat_points',
+            $wpdb->prefix . 'dmrc_activitat_documents',
+            $wpdb->prefix . 'dmrc_dme_map',
+            $wpdb->prefix . 'dmrc_provincies_municipis',
         ];
 
         $all_exist = true;
@@ -257,7 +258,7 @@ class WP_Mapes_Rutes_Core
         $charset_collate = $wpdb->get_charset_collate();
 
         // Taula de monuments
-        $points_table = $wpdb->prefix . 'mapes_points';
+        $points_table = $wpdb->prefix . 'dmrc_points';
         $points_sql = "CREATE TABLE $points_table (
         id int(11) NOT NULL AUTO_INCREMENT,
         title varchar(255) NOT NULL,
@@ -278,7 +279,7 @@ class WP_Mapes_Rutes_Core
     ) $charset_collate;";
 
         // Taula de rutes
-        $routes_table = $wpdb->prefix . 'mapes_routes';
+        $routes_table = $wpdb->prefix . 'dmrc_routes';
         $routes_sql = "CREATE TABLE $routes_table (
         id int(11) NOT NULL AUTO_INCREMENT,
         code varchar(50) NOT NULL UNIQUE,
@@ -290,7 +291,7 @@ class WP_Mapes_Rutes_Core
     ) $charset_collate;";
 
         // Taula relació ruta-monuments
-        $route_points_table = $wpdb->prefix . 'mapes_route_points';
+        $route_points_table = $wpdb->prefix . 'dmrc_route_points';
         $route_points_sql = "CREATE TABLE $route_points_table (
         id int(11) NOT NULL AUTO_INCREMENT,
         route_id int(11) NOT NULL,

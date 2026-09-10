@@ -65,7 +65,7 @@ class WP_Mapes_Ajax
     public function add_point()
     {
         global $wpdb;
-        $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}mapes_%'");
+        $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}dmrc_%'");
         error_log("TAULES TROBADES: " . print_r($tables, true));
 
         $this->verify_nonce();
@@ -109,9 +109,9 @@ class WP_Mapes_Ajax
             $dme = null;
         }
 
-        // Si no hi ha DME, intentar cercar automàticament a la taula de mapping (mapes_dme_map)
+        // Si no hi ha DME, intentar cercar automàticament a la taula de mapping (dmrc_dme_map)
         if ($dme === null) {
-            $dme_table = $wpdb->prefix . 'mapes_dme_map';
+            $dme_table = $wpdb->prefix . 'dmrc_dme_map';
 
             // comprovar que la taula existeix
             $exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $dme_table));
@@ -297,9 +297,9 @@ class WP_Mapes_Ajax
     {
         $this->verify_nonce();
 
-        $code = sanitize_text_field($_POST['code'] ?? '');
-        $name = sanitize_text_field($_POST['name'] ?? '');
-        $color = sanitize_hex_color($_POST['color'] ?? '#000000');
+        $code = sanitize_text_field(stripslashes($_POST['code'] ?? ''));
+        $name = sanitize_text_field(stripslashes($_POST['name'] ?? ''));
+        $color = sanitize_hex_color(stripslashes($_POST['color'] ?? '#000000'));
         $points_json = stripslashes($_POST['points'] ?? '[]');
 
         if (empty($code) || empty($name)) {
@@ -336,9 +336,9 @@ class WP_Mapes_Ajax
         $this->verify_nonce();
 
         $id = intval($_POST['id'] ?? 0);
-        $code = sanitize_text_field($_POST['code'] ?? '');
-        $name = sanitize_text_field($_POST['name'] ?? '');
-        $color = sanitize_hex_color($_POST['color'] ?? '#000000');
+        $code = sanitize_text_field(stripslashes($_POST['code'] ?? ''));
+        $name = sanitize_text_field(stripslashes($_POST['name'] ?? ''));
+        $color = sanitize_hex_color(stripslashes($_POST['color'] ?? '#000000'));
         $points_json = stripslashes($_POST['points'] ?? '[]');
 
         if (!$id || empty($code) || empty($name)) {
@@ -435,8 +435,8 @@ class WP_Mapes_Ajax
             // Comprovar si hi ha conflicte d'horari
             $conflicte = $wpdb->get_row($wpdb->prepare("
             SELECT a.id, a.indicatiu
-            FROM {$wpdb->prefix}mapes_activitats a
-            INNER JOIN {$wpdb->prefix}mapes_activitat_points ap ON a.id = ap.activitat_id
+            FROM {$wpdb->prefix}dmrc_activitats a
+            INNER JOIN {$wpdb->prefix}dmrc_activitat_points ap ON a.id = ap.activitat_id
             WHERE ap.point_id = %d 
             AND a.data_activitat = %s 
             AND a.horari = %s 
@@ -447,7 +447,7 @@ class WP_Mapes_Ajax
                 // Obtenir nom del monument per al missatge
                 $monument = $wpdb->get_row($wpdb->prepare("
                 SELECT title, poblacio 
-                FROM {$wpdb->prefix}mapes_points 
+                FROM {$wpdb->prefix}dmrc_points 
                 WHERE id = %d
             ", $selected_monument));
 
@@ -547,9 +547,9 @@ class WP_Mapes_Ajax
 
         $conflicte = $wpdb->get_row($wpdb->prepare("
         SELECT a.id, a.indicatiu, p.title, p.poblacio
-        FROM {$wpdb->prefix}mapes_activitats a
-        INNER JOIN {$wpdb->prefix}mapes_activitat_points ap ON a.id = ap.activitat_id
-        INNER JOIN {$wpdb->prefix}mapes_points p ON ap.point_id = p.id
+        FROM {$wpdb->prefix}dmrc_activitats a
+        INNER JOIN {$wpdb->prefix}dmrc_activitat_points ap ON a.id = ap.activitat_id
+        INNER JOIN {$wpdb->prefix}dmrc_points p ON ap.point_id = p.id
         WHERE ap.point_id = %d 
         AND a.data_activitat = %s 
         AND a.horari = %s 
@@ -719,7 +719,7 @@ class WP_Mapes_Ajax
 
         // 🔍 DEBUG: VEURE QUÈ HI HA A LA TAULA
         global $wpdb;
-        $table = $wpdb->prefix . 'mapes_activitats';
+        $table = $wpdb->prefix . 'dmrc_activitats';
 
         // Buscar l'activació sense condició d'estat
         $activation = $wpdb->get_row($wpdb->prepare("
@@ -798,7 +798,7 @@ class WP_Mapes_Ajax
             // Verificar que l'activació existeix i està pendent
             global $wpdb;
             $activation = $wpdb->get_row($wpdb->prepare("
-    SELECT * FROM {$wpdb->prefix}mapes_activitats  // ✅ NOVA
+    SELECT * FROM {$wpdb->prefix}dmrc_activitats  // ✅ NOVA
     WHERE id = %d AND status IN ('creada', 'finalitzada')
 ", $activation_id));
 
@@ -853,7 +853,7 @@ class WP_Mapes_Ajax
             // Verificar que l'activació existeix
             global $wpdb;
             $activation = $wpdb->get_row($wpdb->prepare("
-    SELECT * FROM {$wpdb->prefix}mapes_activitats  // ✅ NOVA
+    SELECT * FROM {$wpdb->prefix}dmrc_activitats  // ✅ NOVA
     WHERE id = %d AND status IN ('creada', 'finalitzada')
 ", $activation_id));
 
@@ -907,11 +907,11 @@ class WP_Mapes_Ajax
             }
 
             global $wpdb;
-            $activations_table = $wpdb->prefix . 'mapes_activitats';
-            $routes_table = $wpdb->prefix . 'mapes_routes';
-            $activation_points_table = $wpdb->prefix . 'mapes_activitat_points';
-            $route_points_table = $wpdb->prefix . 'mapes_route_points';
-            $points_table = $wpdb->prefix . 'mapes_points';
+            $activations_table = $wpdb->prefix . 'dmrc_activitats';
+            $routes_table = $wpdb->prefix . 'dmrc_routes';
+            $activation_points_table = $wpdb->prefix . 'dmrc_activitat_points';
+            $route_points_table = $wpdb->prefix . 'dmrc_route_points';
+            $points_table = $wpdb->prefix . 'dmrc_points';
 
             // ⭐ OBTENIR DADES BÀSIQUES AMB USER_NAME CORRECTE
             $activation = $wpdb->get_row($wpdb->prepare("
@@ -1029,7 +1029,7 @@ class WP_Mapes_Ajax
 
         // Obtenir dades activitat de BD
         global $wpdb;
-        $table_activitats = $wpdb->prefix . 'mapes_activitats';
+        $table_activitats = $wpdb->prefix . 'dmrc_activitats';
         $activitat = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table_activitats WHERE id = %d",
             $activitat_id
