@@ -47,6 +47,11 @@ class WP_Mapes_Ajax
         add_action('wp_ajax_mapes_check_availability', array($this, 'check_availability'));
         add_action('wp_ajax_nopriv_mapes_check_availability', array($this, 'check_availability'));
 
+        add_action('wp_ajax_mapes_get_provincies', array($this, 'get_provincies'));
+        add_action('wp_ajax_nopriv_mapes_get_provincies', array($this, 'get_provincies'));
+        add_action('wp_ajax_mapes_get_municipis', array($this, 'get_municipis'));
+        add_action('wp_ajax_nopriv_mapes_get_municipis', array($this, 'get_municipis'));
+
         // NOVA ACCIÓ PER VALIDACIÓ ADI
         add_action('wp_ajax_mapes_validate_adi_only', array($this, 'validate_adi_only'));
         add_action('wp_ajax_nopriv_mapes_validate_adi_only', array($this, 'validate_adi_only'));
@@ -59,6 +64,35 @@ class WP_Mapes_Ajax
             wp_send_json_error('Verificació de seguretat fallida');
             exit;
         }
+    }
+
+    public function get_provincies()
+    {
+        global $wpdb;
+        $this->verify_nonce();
+        $table = $wpdb->prefix . 'dmrc_provincies_municipis';
+        $provincies = $wpdb->get_col("SELECT DISTINCT provincia FROM $table WHERE provincia <> '' ORDER BY provincia ASC");
+        wp_send_json_success($provincies ?: array());
+    }
+
+    public function get_municipis()
+    {
+        global $wpdb;
+        $this->verify_nonce();
+        $provincia = sanitize_text_field(wp_unslash($_POST['provincia'] ?? ''));
+        $search = sanitize_text_field(wp_unslash($_POST['search'] ?? ''));
+
+        if ($provincia === '' || mb_strlen($search) < 3) {
+            wp_send_json_success(array());
+        }
+
+        $table = $wpdb->prefix . 'dmrc_provincies_municipis';
+        $municipis = $wpdb->get_col($wpdb->prepare(
+            "SELECT poblacio FROM $table WHERE provincia = %s AND poblacio LIKE %s ORDER BY poblacio ASC LIMIT 20",
+            $provincia,
+            '%' . $wpdb->esc_like($search) . '%'
+        ));
+        wp_send_json_success($municipis ?: array());
     }
 
     // GESTIÓ PUNTS (funcions existents)

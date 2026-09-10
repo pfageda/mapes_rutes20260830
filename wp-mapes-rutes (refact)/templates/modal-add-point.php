@@ -39,20 +39,17 @@
                     <!-- ⭐ NOUS CAMPS - NOMÉS PER UBICACIÓ PER NOM -->
                     <div style="margin-top: 15px;">
                         <div class="mapes-form-group">
-                            <label>Població *</label>
-                            <input type="text" name="poblacio" placeholder="Ex: Barcelona" required>
+                            <label>Província *</label>
+                            <select name="provincia" class="mapes-provincia-select" required>
+                                <option value="">Selecciona província</option>
+                            </select>
                         </div>
 
-                        <div class="mapes-form-group">
-                            <label>Província *</label>
-                            <select name="provincia" required>
-                                <option value="">Selecciona província</option>
-                                <option value="Barcelona">Barcelona</option>
-                                <option value="Girona">Girona</option>
-                                <option value="Lleida">Lleida</option>
-                                <option value="Tarragona">Tarragona</option>
-                                <option value="New York">New York</option>
-                            </select>
+                        <div class="mapes-form-group mapes-poblacio-field">
+                            <label>Població *</label>
+                            <input type="text" name="poblacio" placeholder="Escriu com a mínim 3 lletres" required
+                                autocomplete="off">
+                            <div class="mapes-poblacio-suggestions" role="listbox"></div>
                         </div>
                     </div>
                 </div>

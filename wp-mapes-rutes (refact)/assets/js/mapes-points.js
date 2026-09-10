@@ -3,7 +3,79 @@
  */
 class MapesPoints {
   constructor() {
-    // Variables editMaps i editMarkers eliminades - ja no es necessiten
+    document.addEventListener("DOMContentLoaded", () => {
+      this.initializeLocationFields();
+    });
+  }
+
+  initializeLocationFields() {
+    document.querySelectorAll(".mapes-provincia-select").forEach((select) => {
+      this.loadProvinces(select);
+    });
+    document.addEventListener("change", (event) => {
+      if (event.target.matches(".mapes-provincia-select")) {
+        const form = event.target.closest("form");
+        const input = form && form.querySelector('input[name="poblacio"]');
+        if (input) input.value = "";
+      }
+    });
+    document.addEventListener("input", (event) => {
+      if (event.target.matches('input[name="poblacio"]')) {
+        this.loadMunicipalities(event.target);
+      }
+    });
+  }
+
+  loadProvinces(select, selected = "") {
+    if (!window.mapesCore || !window.mapesCore.config) return;
+    window.mapesCore
+      .sendAjaxRequest("mapes_get_provincies")
+      .then((provinces) => {
+        select.innerHTML = '<option value="">Selecciona província</option>';
+        provinces.forEach((province) => {
+          const option = new Option(
+            province,
+            province,
+            false,
+            province === selected,
+          );
+          select.add(option);
+        });
+      })
+      .catch((error) => console.error("Error carregant províncies:", error));
+  }
+
+  loadMunicipalities(input) {
+    const value = input.value.trim();
+    const form = input.closest("form");
+    const province =
+      form && form.querySelector('select[name="provincia"]')?.value;
+    const suggestions = input.parentElement.querySelector(
+      ".mapes-poblacio-suggestions",
+    );
+    if (!suggestions) return;
+    suggestions.innerHTML = "";
+    if (!province || value.length < 3) return;
+
+    window.mapesCore
+      .sendAjaxRequest("mapes_get_municipis", {
+        provincia: province,
+        search: value,
+      })
+      .then((municipalities) => {
+        municipalities.forEach((municipality) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "mapes-poblacio-suggestion";
+          option.textContent = municipality;
+          option.addEventListener("click", () => {
+            input.value = municipality;
+            suggestions.innerHTML = "";
+          });
+          suggestions.appendChild(option);
+        });
+      })
+      .catch((error) => console.error("Error carregant municipis:", error));
   }
 
   selectPoint(pointId) {
@@ -177,18 +249,15 @@ class MapesPoints {
 
     <div class="mapes-coordinates-grid">
       <div>
-        <label>Població *</label>
-        <input type="text" name="poblacio" value="${poblacioValue.replace(/"/g, "&quot;")}" required>
-      </div>
-      <div>
         <label>Província *</label>
-        <select name="provincia" required>
-          <option value="Barcelona" ${provinciaValue === "Barcelona" ? "selected" : ""}>Barcelona</option>
-          <option value="Girona" ${provinciaValue === "Girona" ? "selected" : ""}>Girona</option>
-          <option value="Lleida" ${provinciaValue === "Lleida" ? "selected" : ""}>Lleida</option>
-          <option value="Tarragona" ${provinciaValue === "Tarragona" ? "selected" : ""}>Tarragona</option>
-          <option value="New York" ${provinciaValue === "New York" ? "selected" : ""}>New York</option>
+        <select name="provincia" class="mapes-provincia-select" required>
+          <option value="">Carregant províncies...</option>
         </select>
+      </div>
+      <div class="mapes-poblacio-field">
+        <label>Població *</label>
+        <input type="text" name="poblacio" value="${poblacioValue.replace(/"/g, "&quot;")}" required autocomplete="off">
+        <div class="mapes-poblacio-suggestions" role="listbox"></div>
       </div>
     </div>
 
@@ -236,6 +305,13 @@ class MapesPoints {
   </div>
 </form>
 `;
+
+    const provinciaSelect = editContent.querySelector(
+      ".mapes-provincia-select",
+    );
+    if (provinciaSelect) {
+      this.loadProvinces(provinciaSelect, provinciaValue);
+    }
 
     // Mostrar el panell
     editPanel.style.display = "block";

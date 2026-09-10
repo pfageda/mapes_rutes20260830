@@ -16,6 +16,35 @@
   overflow-y: auto;
 }
 
+.mapes-poblacio-field {
+  position: relative;
+}
+
+.mapes-poblacio-suggestions {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-top: 0;
+  box-sizing: border-box;
+}
+
+.mapes-poblacio-suggestion {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapes-poblacio-suggestion:hover {
+  background: #f0f6fc;
+}
+
 .mapes-stats {
   display: flex;
   gap: 10px;
