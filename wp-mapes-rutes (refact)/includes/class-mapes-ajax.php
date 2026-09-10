@@ -178,7 +178,7 @@ class WP_Mapes_Ajax
 
         $id = intval($_POST['id'] ?? 0);
         $title = sanitize_text_field(stripslashes($_POST['title'] ?? ''));
-        $codi = sanitize_text_field($_POST['codi'] ?? '');
+        $codi = sanitize_text_field(stripslashes($_POST['codi'] ?? ''));
         $description = sanitize_textarea_field(stripslashes($_POST['description'] ?? ''));
         $lat = floatval($_POST['lat'] ?? 0);
         $lng = floatval($_POST['lng'] ?? 0);
@@ -212,12 +212,12 @@ class WP_Mapes_Ajax
             $dme = null; // no proporcionat
         }
 
-        $poblacio = sanitize_text_field($_POST['poblacio'] ?? '');
-        $provincia = sanitize_text_field($_POST['provincia'] ?? '');
+        $poblacio = sanitize_text_field(stripslashes($_POST['poblacio'] ?? ''));
+        $provincia = sanitize_text_field(stripslashes($_POST['provincia'] ?? ''));
         $fitxa_monument = sanitize_url($_POST['fitxa_monument'] ?? '');
         $vegades_activat = intval($_POST['vegades_activat'] ?? 0);
-        $darrera_activacio = sanitize_text_field($_POST['darrera_activacio'] ?? '');
-        $indicatiu_activacio = sanitize_text_field($_POST['indicatiu_activacio'] ?? '');
+        $darrera_activacio = sanitize_text_field(stripslashes($_POST['darrera_activacio'] ?? ''));
+        $indicatiu_activacio = sanitize_text_field(stripslashes($_POST['indicatiu_activacio'] ?? ''));
 
         if (!$id || empty($title)) {
             wp_send_json_error('ID i nom són obligatoris');
